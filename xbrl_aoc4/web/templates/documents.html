@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block main %}
+<h1>Documents and imports</h1>
+<div class="panel">
+  <h2>Upload documents</h2>
+  <form method="post" enctype="multipart/form-data">
+    <input type="file" name="files" multiple accept=".xlsx,.xls,.docx,.pdf,.txt,.htm,.html">
+    <button class="btn primary">Upload</button>
+  </form>
+  <p class="hint">Excel financial statements (balance sheet, profit and loss, cash flow) can be mapped to XBRL elements. Word, PDF and text documents (directors' report, auditor's report, notes, accounting policies) can fill text blocks.</p>
+</div>
+{% if docs %}
+<div class="panel">
+  <h2>Uploaded</h2>
+  <table class="grid">
+  {% for d in docs %}
+    <tr><td>{{ d }}</td>
+      <td>{% if d.lower().endswith('.xlsx') or d.lower().endswith('.xls') %}
+            <a class="btn small primary" href="{{ url_for('financials', fid=fid, name=d) }}">Map financial statements</a>
+          {% else %}
+            <form method="post" action="{{ url_for('assign_doc', fid=fid) }}" style="display:flex;gap:6px;align-items:center">
+              <input type="hidden" name="doc" value="{{ d }}">
+              <select name="element" style="max-width:420px"><option value="">Put into text block...</option>
+                {% for tb in textblocks %}<option value="{{ tb.id }}">{{ tb.label }}</option>{% endfor %}</select>
+              <select name="pk" style="width:130px"><option value="CY">Current year</option><option value="PY">Previous year</option></select>
+              <button class="btn small">Apply</button>
+            </form>
+          {% endif %}</td>
+      <td><form method="post" action="{{ url_for('delete_doc', fid=fid, name=d) }}"><button class="btn small danger">Delete</button></form></td></tr>
+  {% endfor %}
+  </table>
+</div>
+{% endif %}
+{% endblock %}

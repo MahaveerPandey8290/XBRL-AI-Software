@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block main %}
+<h1>{{ sec.title }}</h1>
+<p class="hint">Fields save automatically when you leave them. <span class="req">*</span> marks fields the MCA rules make mandatory. Grey-green figures are totals calculated from their components; type a value to override.</p>
+{% set mand = schema.rules|selectattr('type','in',['Mandatory','MandatoryCurrentYear','MandatoryStandalone'])|map(attribute='element')|list %}
+<div class="panel">
+<table class="grid">
+  <tr><th>Particulars</th><th>Current year</th><th>Previous year</th></tr>
+  {% for it in sec["items"] %}
+    {% if it.table %}
+      <tr><td class="lbl" colspan="3">&#9638; <a href="{{ url_for('table', fid=fid, tid=it.id) }}">{{ it.label }}</a>
+        {% if f.tables.get(it.id) %}<span class="tag ok">{{ f.tables[it.id]|length }} column(s)</span>{% else %}<span class="tag">empty</span>{% endif %}</td></tr>
+    {% elif it.abstract %}
+      <tr class="abstract"><td colspan="3">{{ it.label|replace(' [Abstract]','')|replace(' [Line Items]','') }}</td></tr>
+    {% else %}
+      {% set ks = period_keys(it) %}
+      <tr class="{{ 'total' if 'total' in it.labelRole.lower() }}">
+        <td class="lbl" title="{{ it.id }}{% if it.rule %}&#10;{{ it.rule }}{% endif %}">{{ it.label }}{% if it.id in mand %}<span class="req">*</span>{% endif %}
+          {% if it.labelRole.startswith('periodStart') %}<span class="tag">opening</span>{% endif %}
+          {% if it.rule %}<div class="hint">{{ it.rule[:160] }}</div>{% endif %}</td>
+        {% for pk in ks %}
+          {% set col_is_py = loop.index == 2 %}
+          <td class="val">
+          {% if (col_is_py and it.noPY) or (not col_is_py and it.noCY) %}<span class="muted">&ndash;</span>
+          {% else %}
+            {% set val = f["values"].get(it.id, {}).get(pk) %}
+            {% set comp = computed.get(it.id, {}).get(pk) if it.calc or it.sum else None %}
+            {% with it=it, pk=pk, val=val, computed=comp %}{% include "_field.html" %}{% endwith %}
+          {% endif %}
+          </td>
+        {% endfor %}
+      </tr>
+    {% endif %}
+  {% endfor %}
+</table>
+</div>
+{% endblock %}

@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block body %}
+<h1>AOC-4 XBRL filings</h1>
+<div class="cards">
+  <div class="panel">
+    <h2>New filing</h2>
+    <form method="post" action="{{ url_for('new_filing') }}">
+      <div class="form-row"><label>Taxonomy</label>
+        <select name="taxonomy">
+          <option value="AS">Non-Ind AS (Companies AS) - C&amp;I 2016</option>
+          <option value="INDAS">Ind AS - 2017</option>
+        </select></div>
+      <div class="form-row"><label>Company name</label><input type="text" name="company" required></div>
+      <div class="form-row"><label>CIN</label><input type="text" name="cin" maxlength="21" required placeholder="U74899DL1993PTC051877"></div>
+      <div class="form-row"><label>FY start</label><input type="date" name="fy_start" required></div>
+      <div class="form-row"><label>FY end</label><input type="date" name="fy_end" required></div>
+      <div class="form-row"><label>Nature of report</label>
+        <select name="nature"><option>Standalone</option><option>Consolidated</option></select></div>
+      <div class="form-row"><label>Amounts typed in</label>
+        <select name="amount_unit">{% for u in AMOUNT_UNITS %}<option>{{ u }}</option>{% endfor %}</select></div>
+      <p class="hint">MCA needs absolute rupee amounts. If you type figures in lakhs, choose Lakhs and the XML will be scaled to rupees.</p>
+      <button class="btn primary">Create filing</button>
+    </form>
+  </div>
+  <div class="panel">
+    <h2>Import</h2>
+    <form method="post" action="{{ url_for('import_file') }}" enctype="multipart/form-data">
+      <p class="hint">Upload one of:<br>
+        &bull; a filled InstantXBRL / TaxPrint Excel template (.xls / .xlsx),<br>
+        &bull; an existing XBRL instance (.xml), to edit or regenerate it.</p>
+      <input type="file" name="file" accept=".xls,.xlsx,.xml" required>
+      <div class="form-row" style="margin-top:8px"><label>Taxonomy</label>
+        <select name="taxonomy"><option value="">Detect automatically</option><option value="AS">Non-Ind AS</option><option value="INDAS">Ind AS</option></select></div>
+      <label><input type="checkbox" name="rollforward" value="1"> XML only: roll forward to next year (last year's figures become previous-year figures)</label><br><br>
+      <button class="btn primary">Import</button>
+    </form>
+  </div>
+  <div class="panel">
+    <h2>Taxonomy</h2>
+    {% for k, st in tax_status.items() %}
+      <p>{{ TAXONOMIES[k].title }}<br>
+      {% if st.downloaded %}<span class="tag ok">downloaded</span>{% else %}<span class="tag warn">not downloaded</span>{% endif %}
+      {% if not TAXONOMIES[k].verified %}<span class="tag warn">entry point not yet verified</span>{% endif %}</p>
+    {% endfor %}
+    <p class="hint">Downloading the MCA taxonomy once (needs internet) gives exact period types and calculation checks.</p>
+    <a class="btn" href="{{ url_for('settings') }}">Taxonomy settings</a>
+  </div>
+</div>
+<div class="panel">
+  <h2>Saved filings</h2>
+  {% if filings %}
+  <table class="grid">
+    <tr><th>Company</th><th>CIN</th><th>Taxonomy</th><th>Nature</th><th>FY end</th><th>Values</th><th>Updated</th><th></th></tr>
+    {% for x in filings %}
+    <tr><td><a href="{{ url_for('editor', fid=x.id) }}">{{ x.company or '(no name)' }}</a></td><td>{{ x.cin }}</td>
+      <td>{{ 'Ind AS' if x.taxonomy == 'INDAS' else 'Non-Ind AS' }}</td><td>{{ x.nature }}</td><td>{{ x.fy_end }}</td>
+      <td>{{ x.n_values }}</td><td>{{ x.updated }}</td>
+      <td><form method="post" action="{{ url_for('delete_filing', fid=x.id) }}" onsubmit="return confirm('Delete this filing?')"><button class="btn small danger">Delete</button></form></td></tr>
+    {% endfor %}
+  </table>
+  {% else %}<p class="muted">No filings yet.</p>{% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block body %}
+<h1>Taxonomy settings</h1>
+{% if msg %}<div class="flash {{ 'err' if 'failed' in msg }}">{{ msg }}</div>{% endif %}
+{% for k, st in tax_status.items() %}
+<div class="panel">
+  <h2>{{ TAXONOMIES[k].title }}</h2>
+  <p>Entry point (schemaRef): <code>{{ TAXONOMIES[k].schemaRef }}</code></p>
+  <p>Namespaces:</p>
+  <ul>{% for p, u in TAXONOMIES[k].namespaces.items() %}<li><code>{{ p }}</code> = <code>{{ u }}</code></li>{% endfor %}</ul>
+  {% if not TAXONOMIES[k].verified %}<p class="flash warn">Not yet checked against a real instance accepted by MCA. Download the taxonomy to confirm, or put the correct values in settings.json.</p>{% endif %}
+  <p>Cache: {{ st.path }} {% if st.downloaded %}<span class="tag ok">downloaded</span>{% else %}<span class="tag warn">not downloaded</span>{% endif %}</p>
+  <form method="post"><input type="hidden" name="key" value="{{ k }}"><button class="btn primary">Download from mca.gov.in</button></form>
+</div>
+{% endfor %}
+<p class="hint">Overrides go in <code>settings.json</code> next to run.py, for example:<br>
+<code>{"taxonomies": {"INDAS": {"schemaRef": "https://...xsd", "namespaces": {"ind-as": "http://..."}}}, "output_dir": "E:/XBRL SOFTWARE/Output"}</code></p>
+{% endblock %}

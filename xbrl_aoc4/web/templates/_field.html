@@ -1,0 +1,25 @@
+{# renders one input. needs: it, pk, val, fid; optional tid, col, computed #}
+{% set kind = field_kind(it) %}
+{% set opts = it.enum or ENUMS.get(it.type) %}
+{% set attrs %}data-eid="{{ it.id }}" data-pk="{{ pk }}"{% if tid is defined and tid %} data-tid="{{ tid }}" data-col="{{ col }}"{% endif %}{% endset %}
+{% if kind == 'textblock' %}
+  {% set taid = 'tb_' ~ it.id ~ '_' ~ pk ~ ('_' ~ col if col is defined else '') %}
+  <textarea id="{{ taid }}" {{ attrs }} rows="3">{{ val or '' }}</textarea>
+  {% if docs %}<select class="hint" onchange="loadDoc(this, '{{ taid }}')"><option value="">Fill from uploaded document...</option>{% for d in docs %}<option>{{ d }}</option>{% endfor %}</select>{% endif %}
+{% elif kind == 'bool' %}
+  <select {{ attrs }}><option value=""></option>
+    <option value="true" {{ 'selected' if (val|string|lower) in ['true','yes'] }}>Yes</option>
+    <option value="false" {{ 'selected' if (val|string|lower) in ['false','no'] }}>No</option></select>
+{% elif opts %}
+  <select {{ attrs }}><option value=""></option>
+    {% for o in opts %}<option {{ 'selected' if val == o }}>{{ o }}</option>{% endfor %}
+    {% if val and val not in opts %}<option selected>{{ val }}</option>{% endif %}</select>
+{% elif kind == 'date' %}
+  <input type="date" {{ attrs }} value="{{ val or '' }}">
+{% elif kind == 'number' %}
+  <input type="text" class="num {{ 'computed' if computed and not val }}" {{ attrs }} value="{{ val if val is not none else '' }}" placeholder="{{ computed or '' }}" inputmode="decimal">
+{% elif it.type == 'stringItemType' and (it.name.startswith('Disclosure') or it.name.startswith('Details') or it.name.startswith('Description') or it.name.endswith('Explanatory')) %}
+  <textarea {{ attrs }} rows="2">{{ val or '' }}</textarea>
+{% else %}
+  <input type="text" {{ attrs }} value="{{ val or '' }}">
+{% endif %}

@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}AOC-4 XBRL Generator{% endblock %}</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body data-fid="{{ fid or '' }}">
+<header class="top">
+  <a class="brand" href="{{ url_for('home') }}">AOC-4 XBRL Generator</a>
+  {% if f %}
+  <span class="meta">{{ f.company or 'Company' }} &middot; {{ f.cin }} &middot; {{ 'Ind AS' if f.taxonomy == 'INDAS' else 'Non-Ind AS (C&I)' }} &middot; {{ f.nature }} &middot; FY {{ f.fy_start }} to {{ f.fy_end }}</span>
+  <span class="actions">
+    <a class="btn small" href="{{ url_for('documents', fid=fid) }}">Documents</a>
+    <a class="btn small" href="{{ url_for('validate_view', fid=fid) }}">Validate</a>
+    <a class="btn small green" href="{{ url_for('generate_view', fid=fid) }}">Generate XML</a>
+  </span>
+  {% else %}
+  <span class="actions"><a class="btn small" href="{{ url_for('settings') }}">Taxonomy settings</a></span>
+  {% endif %}
+</header>
+{% if nav %}
+<div class="layout">
+  <nav class="side">
+    <div class="grp">Filing</div>
+    <a href="{{ url_for('editor', fid=fid) }}">Overview</a>
+    <a href="{{ url_for('header', fid=fid) }}">Company and period</a>
+    <a href="{{ url_for('documents', fid=fid) }}">Documents and imports</a>
+    <div class="grp">Sections</div>
+    {% for s in nav %}
+      <a href="{{ url_for('section', fid=fid, code=s.code) }}" class="{{ 'active' if sec and sec.code == s.code else '' }}">
+        {{ s.title }}{% if filled.get(s.code) %}<span class="cnt">{{ filled[s.code] }}</span>{% endif %}</a>
+      {% for t in s.tables %}
+        <a class="sub {{ 'active' if tid == t.id else '' }}" href="{{ url_for('table', fid=fid, tid=t.id) }}">{{ t.title|replace(' [Table]','') }}{% if filled.get(t.id) %}<span class="cnt">{{ filled[t.id] }}</span>{% endif %}</a>
+      {% endfor %}
+    {% endfor %}
+  </nav>
+  <main>{% block main %}{% endblock %}</main>
+</div>
+{% else %}
+<main style="max-width:1100px;margin:0 auto">{% block body %}{% endblock %}</main>
+{% endif %}
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

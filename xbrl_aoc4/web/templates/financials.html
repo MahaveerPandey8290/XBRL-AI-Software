@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block main %}
+<h1>Map financial statements: {{ name }}</h1>
+<p class="hint">Each row found in the balance sheet, profit and loss and cash flow sheets is matched to the closest XBRL element. Check the suggestions, change any that are wrong, untick rows you don't want, then apply. Totals can be left out: the generator calculates them.</p>
+<form method="post" class="panel">
+  <div class="form-row"><label>Figures in the workbook are in</label>
+    <select name="scale">
+      {% for lab, sc in [('Rupees',1),('Thousands',1000),('Lakhs',100000),('Millions',1000000),('Crores',10000000)] %}
+        <option value="{{ sc }}" {{ 'selected' if data.scale == sc }}>{{ lab }}</option>{% endfor %}
+    </select></div>
+  <p class="hint">Detected: {{ data.scale }}. Amounts are converted to rupees and rounded; per-share figures are not scaled.</p>
+  <table class="grid">
+    <tr><th>Use</th><th>Sheet</th><th>Caption</th><th>Current year</th><th>Previous year</th><th>XBRL element</th></tr>
+    {% for r in data.rows %}
+      {% set i = loop.index0 %}
+      <tr><td><input type="checkbox" name="use_{{ i }}" value="1" {{ 'checked' if r.best }}></td>
+        <td>{{ r.sheet }}</td><td>{{ r.caption }}</td>
+        <td style="text-align:right">{{ '%.2f'|format(r.cy) }}</td><td style="text-align:right">{{ '%.2f'|format(r.py) }}</td>
+        <td><select name="el_{{ i }}">
+          <option value="">(not mapped)</option>
+          {% for s in r.suggestions %}<option value="{{ s.id }}" {{ 'selected' if s.id == r.best }}>{{ s.label }} ({{ (s.score*100)|int }}%)</option>{% endfor %}
+          <optgroup label="All elements">
+          {% for o in options[r.kind] %}<option value="{{ o.id }}">{{ o.label }}</option>{% endfor %}
+          </optgroup></select></td></tr>
+    {% endfor %}
+  </table><br>
+  <button class="btn primary">Apply selected rows</button>
+</form>
+{% endblock %}

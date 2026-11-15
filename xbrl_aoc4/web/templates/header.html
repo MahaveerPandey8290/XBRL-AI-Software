@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block main %}
+<h1>Company and reporting period</h1>
+<form method="post" class="panel">
+  <div class="form-row"><label>Company name</label><input type="text" name="company" value="{{ f.company }}"></div>
+  <div class="form-row"><label>CIN</label><input type="text" name="cin" value="{{ f.cin }}" maxlength="21"></div>
+  <div class="form-row"><label>Current FY start</label><input type="date" name="fy_start" value="{{ f.fy_start }}"></div>
+  <div class="form-row"><label>Current FY end</label><input type="date" name="fy_end" value="{{ f.fy_end }}"></div>
+  <div class="form-row"><label>Previous FY start</label><input type="date" name="py_start" value="{{ f.py_start }}"></div>
+  <div class="form-row"><label>Previous FY end</label><input type="date" name="py_end" value="{{ f.py_end }}"></div>
+  <div class="form-row"><label>Nature of report</label><select name="nature">
+    {% for n in ['Standalone','Consolidated'] %}<option {{ 'selected' if f.nature == n }}>{{ n }}</option>{% endfor %}</select></div>
+  <div class="form-row"><label>Amounts typed in</label><select name="amount_unit">
+    {% for u in AMOUNT_UNITS %}<option {{ 'selected' if f.amount_unit == u }}>{{ u }}</option>{% endfor %}</select></div>
+  <div class="form-row"><label>Decimals attribute</label><input type="text" name="decimals" value="{{ f.decimals }}">
+  </div>
+  <p class="hint">Taxonomy: {{ TAXONOMIES[f.taxonomy].title }} (fixed for this filing). "INF" means amounts are exact, as in the TaxPrint sample; use e.g. -5 if figures are rounded to lakhs.</p>
+  <button class="btn primary">Save</button>
+</form>
+{% endblock %}

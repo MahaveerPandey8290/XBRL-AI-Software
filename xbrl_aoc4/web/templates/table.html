@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block main %}
+<h1>{{ t.title }}</h1>
+<p class="hint">{% if sec_code %}Part of <a href="{{ url_for('section', fid=fid, code=sec_code) }}">{{ schema.section_by_code[sec_code].title }}</a>. {% endif %}
+Each column is one combination of members (for example one class of shares, one director or one asset class). Leave an axis on "Total" to report the total column.</p>
+<div id="msg" class="flash err" style="display:none"></div>
+<div class="panel">
+  <h2>Add a column</h2>
+  <div class="cards">
+  {% for a in t.axes %}
+    <div><label>{{ a.label }}</label>
+    {% if a.typedDomain %}
+      <input type="text" data-axis="{{ a.id }}" value="Column {{ rows|length + 1 }}">
+    {% else %}
+      <select data-axis="{{ a.id }}">
+        <option value="">{{ a.defaultLabel or 'Total (default)' }}</option>
+        {% for m in a.members if m.id != a.default %}<option value="{{ m.id }}">{{ m.label }}</option>{% endfor %}
+      </select>
+    {% endif %}</div>
+  {% endfor %}
+  </div><br>
+  <button class="btn primary" onclick="addColumn('{{ tid }}')">Add column</button>
+</div>
+{% if rows %}
+<div class="panel scroll-x">
+<table class="grid tbl">
+  <tr><th class="lbl">Particulars</th>
+    {% for row in rows %}
+      {% set ci = loop.index0 %}
+      <th colspan="2">
+        {% for a in t.axes %}
+          {% set m = row.dims.get(a.id) %}
+          <div>{% if a.typedDomain %}{{ m }}{% else %}{{ schema.member_label.get(m, a.defaultLabel or 'Total') if m else (a.defaultLabel or 'Total') }}{% endif %}</div>
+        {% endfor %}
+        <button class="btn small danger" onclick="removeColumn('{{ tid }}', {{ ci }})">Remove</button>
+      </th>
+    {% endfor %}</tr>
+  <tr><th class="lbl"></th>{% for row in rows %}<th>Current year</th><th>Previous year</th>{% endfor %}</tr>
+  {% for it in t["items"] %}
+    {% if it.abstract %}
+      <tr class="abstract"><td class="lbl">{{ it.label|replace(' [Abstract]','')|replace(' [Line Items]','') }}</td><td colspan="{{ rows|length * 2 }}"></td></tr>
+    {% else %}
+      {% set ks = period_keys(it) %}
+      <tr><td class="lbl" title="{{ it.id }}{% if it.rule %}&#10;{{ it.rule }}{% endif %}">{{ it.label }}{% if it.labelRole.startswith('periodStart') %} <span class="tag">opening</span>{% endif %}</td>
+      {% for row in rows %}
+        {% set ci = loop.index0 %}
+        {% for pk in ks %}
+          <td>{% if loop.index == 2 and it.noPY %}<span class="muted">&ndash;</span>{% else %}
+          {% set val = row["values"].get(it.id, {}).get(pk) %}
+          {% with it=it, pk=pk, val=val, tid=tid, col=ci, computed=None %}{% include "_field.html" %}{% endwith %}{% endif %}</td>
+        {% endfor %}
+      {% endfor %}</tr>
+    {% endif %}
+  {% endfor %}
+</table>
+</div>
+{% else %}
+<p class="muted">No columns yet.</p>
+{% endif %}
+{% endblock %}

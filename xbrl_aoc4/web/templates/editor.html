@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block main %}
+<h1>Overview</h1>
+{% if request.args.get('applied') %}<div class="flash">{{ request.args.get('applied') }} values applied from the financial statements.</div>{% endif %}
+{% if log %}
+<div class="panel"><h2>Import log</h2>
+  <ul>{% for l in log[:60] %}<li>{{ l }}</li>{% endfor %}</ul>
+  {% if log|length > 60 %}<p class="muted">{{ log|length - 60 }} more lines.</p>{% endif %}
+</div>
+{% endif %}
+<div class="panel">
+  <h2>How to prepare the filing</h2>
+  <ol>
+    <li>Check <a href="{{ url_for('header', fid=fid) }}">company and period</a> details.</li>
+    <li>Upload the financial statements, directors' report, auditor's report and notes under <a href="{{ url_for('documents', fid=fid) }}">Documents</a>. Excel financial statements can be mapped to XBRL elements automatically; Word documents can fill text blocks.</li>
+    <li>Fill or review each section in the left menu. Fields save automatically. Totals left blank are calculated from their components.</li>
+    <li><a href="{{ url_for('validate_view', fid=fid) }}">Validate</a> against the MCA business rules, fix errors, then <a href="{{ url_for('generate_view', fid=fid) }}">generate the XML</a>.</li>
+  </ol>
+</div>
+<div class="panel">
+  <h2>Sections</h2>
+  <table class="grid">
+    <tr><th>Section</th><th>Values entered</th><th>Tables used</th></tr>
+    {% for s in nav %}
+    <tr><td><a href="{{ url_for('section', fid=fid, code=s.code) }}">{{ s.title }}</a>{% if s.hidden %} <span class="tag">optional</span>{% endif %}</td>
+      <td>{{ filled.get(s.code, 0) }}</td>
+      <td>{% set n = namespace(c=0) %}{% for t in s.tables %}{% if filled.get(t.id) %}{% set n.c = n.c + 1 %}{% endif %}{% endfor %}{{ n.c }} of {{ s.tables|length }}</td></tr>
+    {% endfor %}
+  </table>
+  <p><a class="btn" href="{{ url_for('export_json', fid=fid) }}">Download filing data (JSON backup)</a></p>
+</div>
+{% endblock %}

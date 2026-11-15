@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block main %}
+<h1>XML generated</h1>
+{% if forced %}<div class="flash warn">Generated with {{ res.errors|length }} validation error(s) still open. The MCA portal may reject it.</div>
+{% else %}<div class="flash">Validation passed and the instance document was created with {{ n_facts }} facts.</div>{% endif %}
+<div class="panel">
+  <p><b>{{ name }}</b></p>
+  <p class="hint">Saved to: {{ path }}</p>
+  <a class="btn green" href="{{ url_for('download', fid=fid, name=name) }}">Download XML</a>
+  <a class="btn" href="{{ url_for('validate_view', fid=fid) }}">Back to validation</a>
+</div>
+{% if warns %}<div class="panel"><h2>Generator notes</h2><ul>{% for w in warns %}<li>{{ w }}</li>{% endfor %}</ul></div>{% endif %}
+<div class="panel"><h2>Next steps</h2>
+  <ol><li>Open the XML in the MCA XBRL validation tool and run "Validate" and "Pre-scrutiny".</li>
+      <li>Convert to PDF with the MCA tool, check it, then attach the XML to the AOC-4 XBRL form.</li></ol>
+</div>
+{% endblock %}
