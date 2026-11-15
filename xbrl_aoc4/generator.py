@@ -123,6 +123,7 @@ class Generator:
         self.units: set[str] = set()
         self.facts: list[str] = []
         self.tbl_n = 0
+        self.emitted: set = set()
         self.warnings: list[str] = []
 
     # ---------------------------------------------------------- contexts
@@ -205,6 +206,9 @@ class Generator:
         if cid is None:
             self.warnings.append(f"{eid}: no {pk} period for this element; skipped")
             return
+        if (eid, cid) in self.emitted:
+            return  # an element/context pair may only be reported once
+        self.emitted.add((eid, cid))
         n = len(self.facts) + 1
         q = _qname(eid)
         if is_numeric(el):
@@ -239,7 +243,7 @@ class Generator:
                     self.fact(eid, pk, v)
         for tid, rows in f.tables.items():
             table = self.schema.tables.get(tid)
-            order = [it["id"] for it in table["items"]] if table else []
+            order = list(dict.fromkeys(it["id"] for it in table["items"])) if table else []
             for row in rows:
                 dims = {k: v for k, v in row["dims"].items() if v not in (None, "")}
                 if table:

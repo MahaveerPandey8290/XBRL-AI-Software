@@ -17,8 +17,6 @@ from functools import lru_cache
 from pathlib import Path
 from urllib.parse import urljoin
 
-from lxml import etree
-
 CACHE_ROOT = Path.home() / ".xbrl_aoc4" / "taxonomy"
 XS = "http://www.w3.org/2001/XMLSchema"
 LINK = "http://www.xbrl.org/2003/linkbase"
@@ -58,6 +56,7 @@ def download(key: str, log=print) -> dict:
             if url == entry:
                 raise
             continue
+        from lxml import etree  # only needed when downloading the taxonomy
         try:
             root = etree.fromstring(data)
         except etree.XMLSyntaxError:

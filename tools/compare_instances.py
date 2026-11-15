@@ -15,6 +15,7 @@ def facts(path):
     root = etree.parse(path).getroot()
     ctx = read_contexts(root)
     out = {}
+    dups = 0
     for el in root:
         if not isinstance(el.tag, str) or el.get("contextRef") not in ctx:
             continue
@@ -28,7 +29,12 @@ def facts(path):
                 val = str(float(val))
             except ValueError:
                 pass
+        if key in out:
+            dups += 1
         out[key] = val
+    if dups:
+        print(f"  {path}: {dups} duplicate fact(s)")
+        out[("__duplicates__",)] = str(dups)
     return out
 
 

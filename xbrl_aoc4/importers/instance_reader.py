@@ -5,7 +5,8 @@ from __future__ import annotations
 from collections import Counter
 from pathlib import Path
 
-from lxml import etree
+import io
+import xml.etree.ElementTree as ET
 
 from ..model import Filing
 from ..schema_loader import load_schema
@@ -53,22 +54,29 @@ def read_contexts(root):
     return ctxs
 
 
-def detect_taxonomy(root) -> str:
+def detect_taxonomy(root, prefixes: dict) -> str:
     for ref in root.iter(f"{{{LINK}}}schemaRef"):
         href = ref.get(f"{{{XLINK}}}href", "")
         if "2016" in href or "CnI" in href:
             return "AS"
         return "INDAS"
-    return "INDAS" if "ind-as" in (root.nsmap or {}) else "AS"
+    return "INDAS" if "ind-as" in prefixes.values() else "AS"
+
+
+def parse(path_or_bytes):
+    """Parse with the standard library; return (root, {namespace_uri: prefix})."""
+    data = bytes(path_or_bytes) if isinstance(path_or_bytes, (bytes, bytearray)) else open(path_or_bytes, "rb").read()
+    prefixes = {}
+    for ev, (pfx, uri) in ET.iterparse(io.BytesIO(data), events=("start-ns",)):
+        if pfx:
+            prefixes.setdefault(uri, pfx)
+    return ET.fromstring(data), prefixes
 
 
 def read_instance(path_or_bytes, taxonomy: str | None = None) -> tuple[Filing, list[str]]:
     """Return (filing, warnings)."""
-    if isinstance(path_or_bytes, (bytes, bytearray)):
-        root = etree.fromstring(bytes(path_or_bytes))
-    else:
-        root = etree.parse(str(path_or_bytes)).getroot()
-    key = taxonomy or detect_taxonomy(root)
+    root, prefixes = parse(path_or_bytes if isinstance(path_or_bytes, (bytes, bytearray)) else str(path_or_bytes))
+    key = taxonomy or detect_taxonomy(root, prefixes)
     schema = load_schema(key)
     ctxs = read_contexts(root)
     warnings: list[str] = []
@@ -104,7 +112,7 @@ def read_instance(path_or_bytes, taxonomy: str | None = None) -> tuple[Filing, l
         if not isinstance(el.tag, str) or el.get("contextRef") is None:
             continue
         ns, local = el.tag[1:].split("}")
-        prefix = next((p for p, u in (el.nsmap or {}).items() if u == ns and p), None)
+        prefix = prefixes.get(ns)
         if not prefix:
             continue
         eid = f"{prefix}_{local}"

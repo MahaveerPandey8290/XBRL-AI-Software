@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AOC-4 XBRL Generator</title>
+<meta name="description" content="Prepare and validate the MCA AOC-4 XBRL instance document (Non-Ind AS and Ind AS) in your browser.">
+<style>
+:root { --bg:#f5f6f8; --panel:#fff; --ink:#1d2433; --muted:#5d6677; --line:#dfe3ea; --accent:#1f5fbf; --soft:#e8f0fc; --ok:#1b7f4b; --warn:#a86400; --err:#b42318; }
+@media (prefers-color-scheme: dark) { :root { --bg:#12161f; --panel:#1b2130; --ink:#e6e9ef; --muted:#9aa3b5; --line:#2c3446; --accent:#6ea0f0; --soft:#1f2a40; --ok:#4cc38a; --warn:#e0a84a; --err:#f07a6e; } }
+* { box-sizing:border-box; }
+body { margin:0; font:15px/1.5 "Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif; color:var(--ink); background:var(--bg); }
+header { background:#14284b; color:#fff; padding:28px 16px; }
+header .wrap, main { max-width:1040px; margin:0 auto; }
+header h1 { margin:0 0 6px; font-size:26px; }
+header p { margin:0; color:#c6d3ea; max-width:720px; }
+main { padding:20px 16px 60px; }
+.panel { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:18px 20px; margin-bottom:18px; }
+h2 { font-size:18px; margin:0 0 12px; }
+.grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px 16px; }
+label { display:block; font-size:13px; color:var(--muted); margin-bottom:4px; }
+input, select { width:100%; padding:8px 9px; border:1px solid var(--line); border-radius:6px; font:inherit; background:var(--panel); color:var(--ink); }
+.btn { display:inline-block; padding:9px 16px; border-radius:7px; border:1px solid var(--line); background:var(--panel); color:var(--ink); cursor:pointer; font:inherit; text-decoration:none; }
+.btn.primary { background:var(--accent); border-color:var(--accent); color:#fff; }
+.btn.green { background:var(--ok); border-color:var(--ok); color:#fff; }
+.btn:disabled { opacity:.55; cursor:progress; }
+.hint { font-size:13px; color:var(--muted); }
+.status { padding:10px 14px; border-radius:7px; background:var(--soft); margin:12px 0; }
+.status.err { color:var(--err); } .status.ok { color:var(--ok); }
+.finding { padding:6px 0; border-bottom:1px solid var(--line); font-size:14px; }
+.lvl-error { color:var(--err); font-weight:600; } .lvl-warning { color:var(--warn); font-weight:600; }
+table { border-collapse:collapse; width:100%; font-size:13px; }
+th, td { text-align:left; padding:5px 8px; border-bottom:1px solid var(--line); vertical-align:top; }
+td.n { text-align:right; font-variant-numeric:tabular-nums; }
+.steps li { margin-bottom:6px; }
+code { background:var(--soft); padding:1px 5px; border-radius:4px; }
+.hidden { display:none; }
+.scroll { max-height:420px; overflow:auto; }
+@media (max-width:600px) { header h1 { font-size:21px; } .panel { padding:14px; } }
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <h1>AOC-4 XBRL Generator</h1>
+  <p>Create the MCA AOC-4 XBRL instance document (XML) for Non-Ind AS (C&amp;I taxonomy) and Ind AS companies, check it against the MCA business rules, and download it. Your files are processed inside your browser and never uploaded.</p>
+</div></header>
+<main>
+  <section class="panel">
+    <h2>1. Filing details</h2>
+    <div class="grid">
+      <div><label for="taxonomy">Taxonomy</label>
+        <select id="taxonomy"><option value="AS">Non-Ind AS (Companies AS) - C&amp;I 2016</option><option value="INDAS">Ind AS - 2017</option></select></div>
+      <div><label for="company">Company name</label><input id="company" placeholder="As in MCA records"></div>
+      <div><label for="cin">CIN</label><input id="cin" maxlength="21" placeholder="U74899DL1993PTC051877"></div>
+      <div><label for="fy_start">Financial year start</label><input id="fy_start" type="date" value="2025-04-01"></div>
+      <div><label for="fy_end">Financial year end</label><input id="fy_end" type="date" value="2026-03-31"></div>
+      <div><label for="nature">Nature of report</label><select id="nature"><option>Standalone</option><option>Consolidated</option></select></div>
+    </div>
+    <p class="hint">When you upload a filled template or an existing XML, its own company details are used for anything you leave blank here.</p>
+  </section>
+
+  <section class="panel">
+    <h2>2. Upload your data</h2>
+    <input id="files" type="file" multiple accept=".xls,.xlsx,.xml">
+    <ul class="hint">
+      <li><b>Filled InstantXBRL / TaxPrint template</b> (.xls / .xlsx): every section and table is read.</li>
+      <li><b>Existing XBRL instance</b> (.xml): to check or regenerate it.</li>
+      <li><b>Your own financial statements workbook</b> (.xlsx): balance sheet, profit and loss and cash flow rows are matched to XBRL elements automatically; the scale (lakhs, thousands) is detected.</li>
+    </ul>
+    <button id="run" class="btn primary" disabled>Loading the engine...</button>
+    <div id="status" class="status hint">Starting Python in your browser (first visit downloads about 15 MB).</div>
+  </section>
+
+  <section id="results" class="panel hidden">
+    <h2>3. Result</h2>
+    <div id="summary"></div>
+    <p><button id="download" class="btn green">Download XML</button></p>
+    <div id="findings" class="scroll"></div>
+    <div id="mapping"></div>
+    <details><summary class="hint">Processing log</summary><ul id="log" class="hint"></ul></details>
+  </section>
+
+  <section class="panel">
+    <h2>Full desktop app</h2>
+    <p>The browser version covers import, validation and XML generation. The desktop app adds screens to type and edit every section and table, document upload into text blocks, saved filings and roll-forward to next year.</p>
+    <ol class="steps">
+      <li>Install Python 3.10 or newer from <a href="https://www.python.org/downloads/">python.org</a>.</li>
+      <li><a class="btn" href="https://github.com/MahaveerPandey8290/XBRL-AI-Software/archive/refs/heads/main.zip">Download the app (zip)</a> and extract it.</li>
+      <li>Double-click <code>run.bat</code>. It opens in your browser at <code>http://127.0.0.1:5050</code>.</li>
+    </ol>
+    <p class="hint">Source code: <a href="https://github.com/MahaveerPandey8290/XBRL-AI-Software">github.com/MahaveerPandey8290/XBRL-AI-Software</a></p>
+  </section>
+</main>
+
+<script src="https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+let py = null, lastXml = null, lastName = 'aoc4.xml';
+function setStatus(msg, cls) { const s = $('status'); s.textContent = msg; s.className = 'status ' + (cls || 'hint'); }
+function esc(s) { return String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+async function boot() {
+  try {
+    py = await loadPyodide();
+    setStatus('Loading XML and Excel libraries...');
+    await py.loadPackage(['micropip']);
+    const micropip = py.pyimport('micropip');
+    await micropip.install(['openpyxl', 'xlrd']);
+    setStatus('Loading the AOC-4 rules and templates...');
+    const buf = await (await fetch('xbrl_aoc4.zip')).arrayBuffer();
+    py.unpackArchive(buf, 'zip', {extractDir: '/app'});
+    await py.runPythonAsync("import sys; sys.path.insert(0, '/app'); import xbrl_aoc4.browser");
+    $('run').disabled = false; $('run').textContent = 'Validate and generate XML';
+    setStatus('Ready. Choose your files and click "Validate and generate XML".', 'ok');
+  } catch (e) {
+    setStatus('Could not start the engine: ' + e.message + '. Use the desktop app instead.', 'err');
+  }
+}
+
+$('run').addEventListener('click', async () => {
+  const files = [...$('files').files];
+  $('run').disabled = true;
+  setStatus('Processing...');
+  try {
+    const list = [];
+    for (const f of files) list.push([f.name, new Uint8Array(await f.arrayBuffer())]);
+    const header = {};
+    for (const k of ['taxonomy','company','cin','fy_start','fy_end','nature']) header[k] = $(k).value;
+    if (files.length) { header.fy_start_given = header.fy_start; }
+    py.globals.set('files_in', py.toPy(list));
+    py.globals.set('header_in', JSON.stringify(header));
+    const out = await py.runPythonAsync("import xbrl_aoc4.browser as b\nb.process([(n, bytes(d)) for n, d in files_in], header_in)");
+    show(JSON.parse(out));
+    setStatus('Done.', 'ok');
+  } catch (e) {
+    setStatus('Error: ' + e.message, 'err');
+  } finally { $('run').disabled = false; }
+});
+
+function show(r) {
+  lastXml = r.xml; lastName = r.filename;
+  $('results').classList.remove('hidden');
+  const ok = r.errors.length === 0;
+  $('summary').innerHTML = `<div class="status ${ok ? 'ok' : 'err'}">${esc(r.company || 'Company')} &middot; ${esc(r.cin)} &middot; ${r.taxonomy === 'INDAS' ? 'Ind AS' : 'Non-Ind AS'} &middot; ${esc(r.nature)} &middot; FY ${esc(r.fy_start)} to ${esc(r.fy_end)}<br>
+    ${r.facts} facts generated. ${r.errors.length} error(s), ${r.warnings.length} warning(s)${ok ? ': passes all checks.' : '. The XML can still be downloaded, but fix the errors before filing.'}</div>`;
+  const names = {CY: 'Current year', PY: 'Previous year', OPEN: 'Opening'};
+  $('findings').innerHTML = [...r.errors, ...r.warnings].slice(0, 400).map(i =>
+    `<div class="finding"><span class="lvl-${i.level}">${i.level.toUpperCase()}</span> ${i.period ? '[' + names[i.period] + '] ' : ''}${esc(i.message)}</div>`).join('');
+  if (r.mapped && r.mapped.length) {
+    $('mapping').innerHTML = '<h2 style="margin-top:16px">Financial statement mapping</h2><div class="scroll"><table><tr><th>Caption</th><th>Current year</th><th>Previous year</th><th>XBRL element</th></tr>' +
+      r.mapped.map(m => `<tr><td>${esc(m.caption)}</td><td class="n">${Number(m.cy).toFixed(2)}</td><td class="n">${Number(m.py).toFixed(2)}</td><td>${m.element ? esc(m.label) : '<span class="hint">not mapped (use the desktop app to map it)</span>'}</td></tr>`).join('') + '</table></div>';
+  } else { $('mapping').innerHTML = ''; }
+  $('log').innerHTML = r.log.concat(r.notes || []).map(l => `<li>${esc(l)}</li>`).join('');
+}
+
+$('download').addEventListener('click', () => {
+  if (!lastXml) return;
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([lastXml], {type: 'application/xml'}));
+  a.download = lastName; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+});
+boot();
+</script>
+</body>
+</html>
