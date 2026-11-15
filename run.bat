@@ -8,6 +8,8 @@ if errorlevel 1 goto nopython
 .venv\Scripts\python -m pip install --upgrade pip
 .venv\Scripts\python -m pip install -r requirements.txt
 :start
+REM picks up any new requirement after an update (quick when nothing is missing)
+.venv\Scripts\python -m pip install -q --disable-pip-version-check -r requirements.txt
 .venv\Scripts\python run.py
 pause
 exit /b 0
