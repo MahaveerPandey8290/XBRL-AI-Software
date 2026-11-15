@@ -2,5 +2,5 @@ flask>=3.0
 lxml>=5.0
 openpyxl>=3.1
 xlrd>=2.0
-python-docx>=1.1
-# optional, for reading PDF documents into text blocks: pip install pdfplumber
+pypdf>=4.0
+# optional, better PDF text extraction: pip install pdfplumber

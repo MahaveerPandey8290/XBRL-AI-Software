@@ -61,11 +61,12 @@ code { background:var(--soft); padding:1px 5px; border-radius:4px; }
 
   <section class="panel">
     <h2>2. Upload your data</h2>
-    <input id="files" type="file" multiple accept=".xls,.xlsx,.xml">
+    <input id="files" type="file" multiple accept=".xls,.xlsx,.xml,.docx,.doc,.pdf,.txt">
     <ul class="hint">
       <li><b>Filled InstantXBRL / TaxPrint template</b> (.xls / .xlsx): every section and table is read.</li>
       <li><b>Existing XBRL instance</b> (.xml): to check or regenerate it.</li>
       <li><b>Your own financial statements workbook</b> (.xlsx): balance sheet, profit and loss and cash flow rows are matched to XBRL elements automatically; the scale (lakhs, thousands) is detected.</li>
+      <li><b>Word and PDF documents</b> (.docx / .pdf): the directors' report (with its annexures), auditor's report, CSR report and notes / accounting policies go into the matching text blocks, recognised from the file name or the opening text. Balance sheet, profit and loss and cash flow statements inside a Word table or a text PDF are mapped like the workbook. Scanned PDFs have no text to read, and old .doc files must be saved as .docx first.</li>
     </ul>
     <button id="run" class="btn primary" disabled>Loading the engine...</button>
     <div id="status" class="status hint">Starting Python in your browser (first visit downloads about 15 MB).</div>
@@ -82,7 +83,7 @@ code { background:var(--soft); padding:1px 5px; border-radius:4px; }
 
   <section class="panel">
     <h2>Full desktop app</h2>
-    <p>The browser version covers import, validation and XML generation. The desktop app adds screens to type and edit every section and table, document upload into text blocks, saved filings and roll-forward to next year.</p>
+    <p>The browser version covers import, validation and XML generation. The desktop app adds screens to type and edit every section and table, choosing any text block for a document, reviewing each mapped row, saved filings and roll-forward to next year.</p>
     <ol class="steps">
       <li>Install Python 3.10 or newer from <a href="https://www.python.org/downloads/">python.org</a>.</li>
       <li><a class="btn" href="https://github.com/MahaveerPandey8290/XBRL-AI-Software/archive/refs/heads/main.zip">Download the app (zip)</a> and extract it.</li>
@@ -105,7 +106,7 @@ async function boot() {
     setStatus('Loading XML and Excel libraries...');
     await py.loadPackage(['micropip']);
     const micropip = py.pyimport('micropip');
-    await micropip.install(['openpyxl', 'xlrd']);
+    await micropip.install(['openpyxl', 'xlrd', 'pypdf']);
     setStatus('Loading the AOC-4 rules and templates...');
     const resp = await fetch('xbrl_aoc4.zip', {cache: 'no-cache'});
     if (!resp.ok) throw new Error('the engine file xbrl_aoc4.zip was not found next to this page (HTTP ' + resp.status + ')');

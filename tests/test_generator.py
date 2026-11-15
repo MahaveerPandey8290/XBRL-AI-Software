@@ -108,6 +108,32 @@ def test_indas_generates():
     assert "ind-as:Assets" in xml and "ind-as:EquityAndLiabilities" in xml
 
 
+def test_documents_word_and_pdf():
+    import io, zipfile, tempfile
+    from xbrl_aoc4.importers.docs_reader import classify_document, text_block_for
+    from xbrl_aoc4.importers.financials_reader import read_financials
+    from xbrl_aoc4.schema_loader import load_schema
+    assert classify_document("Directors Report_2025-26.docx") == "directors"
+    assert classify_document("Auditors Report.pdf") == "auditors"
+    assert classify_document("Annexure - I.docx", "Annual Report on Corporate Social Responsibility") == "csr"
+    assert classify_document("Annexure - II.docx", "FORM NO. AOC -2") == "directors"
+    assert text_block_for(load_schema("AS"), "directors") == "in-ca_DisclosureInBoardOfDirectorsReportExplanatoryTextBlock"
+    assert text_block_for(load_schema("INDAS"), "auditors") == "in-ca_DisclosureInAuditorsReportExplanatory"
+    # a balance sheet in a Word table (built by hand: no python-docx needed)
+    W = 'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"'
+    def p(t): return f"<w:p><w:r><w:t>{t}</w:t></w:r></w:p>"
+    def row(*cs): return "<w:tr>" + "".join(f"<w:tc>{p(c)}</w:tc>" for c in cs) + "</w:tr>"
+    body = (p("Balance Sheet as at 31st March, 2026") + "<w:tbl>" + row("Particulars", "Note", "31.03.2026", "31.03.2025")
+            + row("Share capital", "3", "10,00,000", "10,00,000") + row("Trade payables", "5", "-", "(45,000)") + "</w:tbl>")
+    path = Path(tempfile.mkdtemp()) / "bs.docx"
+    with zipfile.ZipFile(path, "w") as z:
+        z.writestr("word/document.xml", f"<w:document {W}><w:body>{body}</w:body></w:document>")
+    rows = {r["caption"]: r for r in read_financials(path, "AS")["rows"]}
+    assert rows["Share capital"]["cy"] == 1000000 and rows["Share capital"]["note"] == "3"
+    assert rows["Trade payables"]["cy"] == 0 and rows["Trade payables"]["py"] == -45000
+    assert rows["Share capital"]["best"] == "in-gaap_ShareCapital"
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_"):

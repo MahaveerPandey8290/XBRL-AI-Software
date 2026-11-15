@@ -357,7 +357,10 @@ def assign_doc(fid):
     pk = request.form.get("pk", "CY")
     p = storage.docs_dir(fid) / secure_filename(name)
     if p.exists() and eid:
-        f.set_value(eid, pk, document_html(p))
+        try:
+            f.set_value(eid, pk, document_html(p))
+        except ValueError as e:  # e.g. an old .doc file
+            return redirect(url_for("documents", fid=fid, error=str(e)))
         storage.save(fid, f)
     return redirect(request.form.get("back") or url_for("documents", fid=fid))
 

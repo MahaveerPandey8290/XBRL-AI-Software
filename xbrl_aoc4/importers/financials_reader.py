@@ -125,8 +125,26 @@ def classify_sheet(name: str, rows) -> str | None:
     return None
 
 
-def extract_rows(rows):
-    """Return [(caption, cy, py, note)] for rows with a caption and two amounts."""
+def classify_statement_page(rows) -> str | None:
+    """Stricter test for Word tables / PDF pages: a line near the top must start with
+    the statement's title (a tax computation or a note that mentions 'profit and loss'
+    in a sentence is not a statement)."""
+    for r in rows[:6]:
+        line = (str(r[0]) if r and isinstance(r[0], str) else "").strip().lower()
+        if "notes" in line or "schedule" in line:
+            continue
+        if re.match(r"(audited\s+)?balance\s*sheet\s+as\s+(at|on)", line):
+            return "bs"
+        if re.match(r"(statement\s+of\s+profit|profit\s*(and|&)\s*loss\s+(statement|account))", line):
+            return "pl"
+        if re.match(r"(cash\s*flow\s+statement|statement\s+of\s+cash\s*flows?)", line):
+            return "cf"
+    return None
+
+
+def extract_rows(rows, allow_single: bool = False):
+    """Return [(caption, cy, py, note)] for rows with a caption and two amounts
+    (or one amount, current year only, when allow_single: Word/PDF statements)."""
     out = []
     for r in rows:
         cells = list(r)
@@ -135,7 +153,7 @@ def extract_rows(rows):
             continue
         caption = cells[cap_i].strip()
         nums = [(i, _num(v)) for i, v in enumerate(cells) if i > cap_i and _num(v) is not None and not isinstance(v, str)]
-        if len(nums) < 2:
+        if len(nums) < (1 if allow_single else 2):
             continue
         note = ""
         for v in cells[cap_i + 1:]:
@@ -146,7 +164,7 @@ def extract_rows(rows):
         if len(nums) >= 3 and float(nums[0][1]).is_integer() and abs(nums[0][1]) < 100:
             note = note or str(int(nums[0][1]))
             nums = nums[1:]
-        out.append((caption, nums[0][1], nums[1][1], note))
+        out.append((caption, nums[0][1], nums[1][1] if len(nums) > 1 else None, note))
     return out
 
 
@@ -198,29 +216,66 @@ class Matcher:
         return res
 
 
-def read_financials(path, key: str):
-    """Return {'scale': int, 'rows': [{sheet, kind, caption, cy, py, note, suggestions}]}."""
-    import openpyxl
-    path = Path(path)
-    if path.suffix.lower() == ".xls":
+def _to_amounts(rows):
+    """Turn amount-looking text cells ('1,23,456.00', '(5,000)', '-') into numbers,
+    as they come from Word tables and PDF text."""
+    out = []
+    for r in rows:
+        new = []
+        for i, v in enumerate(r):
+            if type(v).__name__ == "Note":
+                new.append(str(v))
+                continue
+            if i and isinstance(v, str):
+                t = v.strip().replace("\u20b9", "").replace("Rs.", "").strip()
+                if t in ("-", "\u2013", "\u2014"):
+                    new.append(0.0)
+                    continue
+                if re.fullmatch(r"\(?-?[\d,]+(?:\.\d+)?\)?", t) and re.search(r"\d", t):
+                    new.append(_num(t))
+                    continue
+            new.append(v)
+        out.append(new)
+    return out
+
+
+def _sheets(path: Path):
+    """[(name, visible, rows)] from a workbook, a Word document's tables or a PDF's pages."""
+    ext = path.suffix.lower()
+    if ext == ".xls":
         import xlrd
         wb = xlrd.open_workbook(str(path))
-        sheets = [(s.name, s.visibility == 0, [s.row_values(r) for r in range(s.nrows)]) for s in wb.sheets()]
-    else:
-        wb = openpyxl.load_workbook(str(path), data_only=True, read_only=True)
-        sheets = [(ws.title, ws.sheet_state == "visible", [list(r) for r in ws.iter_rows(values_only=True)]) for ws in wb.worksheets]
+        return [(s.name, s.visibility == 0, [s.row_values(r) for r in range(s.nrows)]) for s in wb.sheets()]
+    if ext == ".docx":
+        from .docs_reader import docx_tables
+        return [(title or f"{path.stem} table {i + 1}", True, _to_amounts(rows))
+                for i, (title, rows) in enumerate(docx_tables(path))]
+    if ext == ".pdf":
+        from .docs_reader import pdf_pages_rows
+        return [(head or f"{path.stem} page {i + 1}", True, _to_amounts(rows))
+                for i, (head, rows) in enumerate(pdf_pages_rows(path))]
+    import openpyxl
+    wb = openpyxl.load_workbook(str(path), data_only=True, read_only=True)
+    return [(ws.title, ws.sheet_state == "visible", [list(r) for r in ws.iter_rows(values_only=True)])
+            for ws in wb.worksheets]
+
+
+def read_financials(path, key: str):
+    """Return {'scale': int, 'rows': [{sheet, kind, caption, cy, py, note, suggestions}]}."""
+    sheets = _sheets(Path(path))
     m = Matcher(key)
     out = []
     scale = 1
     for name, visible, rows in sheets:
         if not visible:
             continue
-        kind = classify_sheet(name, rows)
+        is_doc = Path(path).suffix.lower() in (".pdf", ".docx")
+        kind = classify_statement_page(([[name]] if Path(path).suffix.lower() == ".docx" else []) + list(rows)) if is_doc else classify_sheet(name, rows)
         if not kind:
             continue
         sc = detect_scale(rows)
         scale = max(scale, sc)
-        for caption, cy, py, note in extract_rows(rows):
+        for caption, cy, py, note in extract_rows(rows, is_doc):
             if norm(caption) in ("total", "", "particulars"):
                 continue
             sug = m.suggest(caption, kind)

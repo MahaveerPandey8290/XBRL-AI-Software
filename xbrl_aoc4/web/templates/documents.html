@@ -4,13 +4,14 @@
 <div class="panel">
   <h2>Upload documents</h2>
   <form method="post" enctype="multipart/form-data">
-    <input type="file" name="files" multiple accept=".xlsx,.xls,.docx,.pdf,.txt,.htm,.html">
+    <input type="file" name="files" multiple accept=".xlsx,.xls,.docx,.doc,.pdf,.txt,.htm,.html">
     <button class="btn primary">Upload</button>
   </form>
   <p class="hint">Excel financial statements (balance sheet, profit and loss, cash flow) can be mapped to XBRL elements. Word, PDF and text documents (directors' report, auditor's report, notes, accounting policies) can fill text blocks.</p>
 </div>
 {% if docs %}
 <div class="panel">
+  {% if request.args.get('error') %}<div class="flash err">{{ request.args.get('error') }}</div>{% endif %}
   <h2>Uploaded</h2>
   <table class="grid">
   {% for d in docs %}
@@ -18,6 +19,9 @@
       <td>{% if d.lower().endswith('.xlsx') or d.lower().endswith('.xls') %}
             <a class="btn small primary" href="{{ url_for('financials', fid=fid, name=d) }}">Map financial statements</a>
           {% else %}
+            {% if d.lower().endswith('.docx') or d.lower().endswith('.pdf') %}
+            <a class="btn small" style="margin-bottom:6px" href="{{ url_for('financials', fid=fid, name=d) }}">Map statement tables</a>
+            {% endif %}
             <form method="post" action="{{ url_for('assign_doc', fid=fid) }}" style="display:flex;gap:6px;align-items:center">
               <input type="hidden" name="doc" value="{{ d }}">
               <select name="element" style="max-width:420px"><option value="">Put into text block...</option>
