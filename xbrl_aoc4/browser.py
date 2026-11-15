@@ -6,6 +6,7 @@ results and the generated XML, using the same code as the desktop app.
 from __future__ import annotations
 
 import json
+import re
 import tempfile
 from pathlib import Path
 
@@ -74,6 +75,90 @@ def _inputs(res, schema) -> list[dict]:
         sec = schema.section_by_code.get(e.get("section", ""), {})
         out.append({"element": e["element"], "period": pk, "label": el["label"], "kind": _kind(el),
                     "options": el.get("enum") or [], "section": sec.get("title", ""), "message": e["message"]})
+    servers = [q for q in out if "ComputerServers" in q["element"]]
+    if servers:
+        out = [q for q in out if "ComputerServers" not in q["element"]]
+        sec = servers[0]["section"]
+        if any("Phone" in q["element"] for q in servers):
+            out.insert(0, {"element": "__phone", "period": "CY", "kind": "text", "options": [], "section": sec,
+                           "label": "Company phone number with STD code",
+                           "message": "Phone of the place where the books are kept."})
+        if any("Phone" not in q["element"] for q in servers):
+            out.insert(0, {"element": "__address", "period": "CY", "kind": "text", "options": [], "section": sec,
+                           "label": "Registered office address with PIN code (where the books / accounting server are kept)",
+                           "message": "Used for the address, city, district, state, PIN and country of the accounting server."})
+    return out
+
+
+def _snapshot(f: Filing) -> dict:
+    return {(eid, pk): v for eid, per in f.values.items() for pk, v in per.items()}
+
+
+class _Sources:
+    """Where each value came from, for the review grid."""
+
+    def __init__(self, f: Filing):
+        self.f, self.src, self.before = f, {}, _snapshot(f)
+
+    def stage(self, why):
+        """Credit every value added or changed since the last stage to `why` (a string,
+        or a function of (element, period) returning one)."""
+        now = _snapshot(self.f)
+        for k, v in now.items():
+            if self.before.get(k) != v:
+                w = why(*k) if callable(why) else why
+                if w:
+                    self.src[k] = w
+        self.before = now
+
+
+def _preview(v: str, kind: str) -> str:
+    if kind == "textblock":
+        t = re.sub(r"\s+", " ", html_to_text(v)).strip()
+        return t[:220] + ("..." if len(t) > 220 else "")
+    return {"true": "Yes", "false": "No"}.get(v, v)
+
+
+def _review(f: Filing, schema, sources: dict) -> list[dict]:
+    """Every value going into the XML, by section, with where it came from."""
+    from .calc import fill_totals
+    vals = fill_totals(f, schema)
+    out = []
+    shown = set()
+    for sec in schema.sections:
+        rows = []
+        for it in sec["items"]:
+            eid = it["id"]
+            if it.get("abstract") or eid in shown:
+                continue
+            per = vals.get(eid) or {}
+            if not any(per.get(pk) not in (None, "") for pk in ("CY", "PY")):
+                continue
+            shown.add(eid)
+            kind = _kind(it)
+            row = {"element": eid, "label": it["label"], "kind": kind}
+            for pk in ("CY", "PY"):
+                v = per.get(pk)
+                if v in (None, ""):
+                    continue
+                row[pk.lower()] = _preview(str(v), kind)
+                row["src_" + pk.lower()] = sources.get((eid, pk)) or (
+                    "worked out as the total of its lines" if f.get_value(eid, pk) in (None, "") else "from the uploaded files")
+            rows.append(row)
+        for tid in sec.get("tables", []):
+            for col in f.tables.get(tid, []):
+                dims = ", ".join(str(m).split("_", 1)[-1] for m in col.get("dims", {}).values())
+                for eid, per in col.get("values", {}).items():
+                    el = schema.element(eid) or {"label": eid}
+                    row = {"element": eid, "label": f"{el['label']} [{dims}]", "kind": _kind(el)}
+                    for pk in ("CY", "PY"):
+                        if per.get(pk) not in (None, ""):
+                            row[pk.lower()] = _preview(str(per[pk]), row["kind"])
+                            row["src_" + pk.lower()] = "from the uploaded files"
+                    if "cy" in row or "py" in row:
+                        rows.append(row)
+        if rows:
+            out.append({"code": sec["code"], "title": sec["title"], "rows": rows})
     return out
 
 
@@ -82,6 +167,7 @@ def process(files: list, header_json: str) -> str:
     values ({element: {period: value}} typed by the user on the page), zero_fill (default true)."""
     from .autofill import balance_with_others, fill_board_report, fill_known_facts, zero_blank_mandatory_amounts
     from .calc import reconcile_rounding
+    from .infer import Docs, Inferrer
     from .schema_loader import load_schema
 
     h = json.loads(header_json or "{}")
@@ -123,9 +209,13 @@ def process(files: list, header_json: str) -> str:
         f.taxonomy = h["taxonomy"]
     f.ensure_periods()
     schema = load_schema(f.taxonomy)
+    S = _Sources(f)
+    S.before = {}
+    S.stage("from the uploaded XBRL file / template")
     mapped = []
     filled: set = set()
     texts: list[str] = []
+    docs = Docs()
     scale = 0
     has_cf = has_csr = False
     for name, p in fin_files:
@@ -147,6 +237,9 @@ def process(files: list, header_json: str) -> str:
             text = html_to_text(body)
         texts.append(text)
         has_csr = has_csr or kind == "csr"
+        dkind = "annexure" if kind == "directors" and "annexure" in name.lower() else kind
+        docs.add(dkind or ("workbook" if not is_doc else "other"), text, body)
+        docs.rows += data["rows"]
         if kind:
             eid = text_block_for(schema, kind)
             if eid and body:
@@ -157,6 +250,7 @@ def process(files: list, header_json: str) -> str:
                 log.append(f"{name}: put into '{schema.element(eid)['label']}'")
             if kind == "directors" and body and "annexure" not in name.lower():
                 notes += fill_board_report(f, schema, body)
+        S.stage(f"read from {name}")
         if not data["rows"]:
             if not kind:
                 log.append(f"{name}: no balance sheet / profit and loss figures and not recognised as a report. "
@@ -164,10 +258,19 @@ def process(files: list, header_json: str) -> str:
             continue
         if not is_doc:  # the workbook's own words (PAN, address ...) help fill general information
             texts.append(data.get("text", ""))
+            docs.add("workbook", data.get("text", ""))
         has_cf = has_cf or any(r["kind"] == "cf" for r in data["rows"])
         scale = max(scale, data["scale"])
-        mapping = [{"element": r["best"], "cy": r["cy"], "py": r["py"], "sheet": r["sheet"]} for r in data["rows"] if r["best"]]
+        docs.scale = max(docs.scale, data["scale"])
+        mapping = [{"element": r["best"], "cy": r["cy"], "py": r["py"], "sheet": r["sheet"], "caption": r["caption"]}
+                   for r in data["rows"] if r["best"]]
         n = apply_mapping(f, mapping, data["scale"])
+        by_el: dict = {}
+        for m in mapping:
+            e = m["element"].replace("@start", "")
+            by_el.setdefault(e, []).append(f"{m['sheet']}: {m['caption']}")
+        S.stage(lambda eid, pk, by_el=by_el, name=name: (
+            "; ".join(dict.fromkeys(by_el[eid]))[:160] if eid in by_el else f"read from {name}"))
         log.append(f"{name}: mapped {len(mapping)} of {len(data['rows'])} rows automatically (scale {data['scale']}), {n} values")
         mapped += [{"caption": r["caption"], "cy": r["cy"], "py": r["py"], "element": r["best"], "sheet": r["sheet"],
                     "label": (r["suggestions"][0]["label"] if r["best"] and r["suggestions"] else "")} for r in data["rows"]]
@@ -180,8 +283,17 @@ def process(files: list, header_json: str) -> str:
         f.set_value("in-ca_DateOfStartOfReportingPeriod", "CY", f.fy_start)
         f.set_value("in-ca_DateOfEndOfReportingPeriod", "CY", f.fy_end)
     f.set_value("in-ca_NatureOfReportStandaloneConsolidated", "CY", f.nature)
+    S.stage("from the filing details you entered")
     if fin_files:
         notes += fill_known_facts(f, schema, texts, scale or 1, has_cf, has_csr)
+        S.stage("general information found in the documents")
+        extra = h.get("values") or {}
+        inf = Inferrer(f, schema, docs, S.src, address=(extra.get("__address") or {}).get("CY") or h.get("address") or "",
+                       phone=(extra.get("__phone") or {}).get("CY") or h.get("phone") or "")
+        notes += inf.run()
+        S.before = _snapshot(f)
+    else:
+        inf = None
     # answers typed on the page win over anything read from the files
     for eid, per in (h.get("values") or {}).items():
         if schema.element(eid) is None:
@@ -189,19 +301,27 @@ def process(files: list, header_json: str) -> str:
         for pk, v in per.items():
             if v not in (None, ""):
                 f.set_value(eid, pk, str(v))
+    S.stage("your answer / correction")
     if mapped:
         notes += reconcile_rounding(f, schema, scale=scale or 1)
+        S.stage("adjusted for rounding so the lines add up to the total")
         notes += balance_with_others(f, schema)
+        S.stage("the part of the total the notes don't break down")
+        from .calc import relationships
+        if inf:
+            inf.nature_of_others(relationships(schema))
+        S.stage(None)
     res = validate(f)
     if h.get("zero_fill", True):
         z = zero_blank_mandatory_amounts(f, schema, res)
         if z:
             notes += z
+            S.stage("required by MCA but not in the documents: set to 0")
             res = validate(f)
     xml, warns = generate(f)
     return json.dumps({
         "taxonomy": f.taxonomy, "company": f.company, "cin": f.cin, "fy_start": f.fy_start, "fy_end": f.fy_end,
         "nature": f.nature, "errors": res.errors, "warnings": res.warnings, "log": log, "mapped": mapped,
         "xml": xml, "filename": output_filename(f), "facts": xml.count('contextRef="'), "notes": notes + warns,
-        "inputs": _inputs(res, schema),
+        "inputs": _inputs(res, schema), "review": _review(f, schema, S.src),
     })

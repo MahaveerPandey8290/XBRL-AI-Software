@@ -153,6 +153,29 @@ def test_nested_totals_and_autofill():
     assert any(h.startswith("SIGNIFICANT AND MATERIAL ORDERS") and h.endswith("TRIBUNALS") for h in heads)
 
 
+def test_infer_from_document_wording():
+    from xbrl_aoc4.infer import Docs, Inferrer
+    from xbrl_aoc4.schema_loader import load_schema
+    f = Filing(taxonomy="AS", cin="U74899DL1993PTC051877", fy_start="2025-04-01", fy_end="2026-03-31")
+    f.ensure_periods()
+    schema = load_schema("AS")
+    d = Docs()
+    d.add("directors", "The Company does not have any Subsidiary, Joint venture or Associate Company.\n"
+                       "Place: New Delhi\nDated: 03-09-2026")
+    d.add("auditors", "As required by the Companies (Auditor's Report) Order, 2020 we give in the Annexure ... "
+                      "the provisions of clause 3(xii) of the Order are not applicable to the Company.")
+    src = {}
+    Inferrer(f, schema, d, src, address="35-A, Siddharth Chambers, Kalu Sarai, Hauz Khas, New Delhi - 110016").run()
+    v = lambda local: f.get_value(next(e for e in schema.elements if e.endswith("_" + local)), "CY")
+    assert v("WhetherCompanyHasSubsidiaryCompanies") == "false"
+    assert v("WhetherCompaniesAuditorsReportOrderIsApplicableOnCompany") == "true"  # one clause n/a is not the whole Order
+    assert v("WhetherMoneyRaisedFromPublicOfferingDuringYear") == "false"
+    assert v("DateOfBoardMeetingWhenFinalAccountsWereApproved") == "2026-09-03"
+    assert v("PinCodeOfPlaceOfMaintenanceOfComputerServersStoringAccountingData") == "110016"
+    assert v("NameOfStateUnionTerritoryOfPlaceOfMaintenanceOfComputerServersStoringAccountingData") == "Delhi"
+    assert src, "each inferred value records its evidence"
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_"):

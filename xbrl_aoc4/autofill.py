@@ -33,7 +33,7 @@ BOARD_SECTIONS = [
     (r"related part", [r"contracts/arrangements with related parties under section 188"]),
     (r"annual return", [r"extract of annual return"]),
     (r"declaration (by|of|from) independent directors", [r"declaration given by independent directors"]),
-    (r"policy on directors.{0,3} appointment|nomination and remuneration", [r"section 178\(1\)"]),
+    (r"policy on directors.{0,3} appointment|nomination and remuneration", [r"section 178\(1\)", r"appointment and remuneration of managerial personnels"]),
     (r"managerial remuneration|particulars of employees|remuneration of (directors|managerial)", [r"appointment and remuneration of managerial personnels"]),
     (r"conservation of energy", [r"^details regarding energy conservation", r"^details regarding technology absorption",
                                  r"^details regarding foreign exchange earnings and outgo"]),
@@ -212,7 +212,7 @@ def zero_blank_mandatory_amounts(f: Filing, schema, result) -> list[str]:
 
 
 OTHERS_COMPONENT = r"^Miscellaneous|(OtherNonoperatingIncome|PaymentForOtherServices|OtherEmployeeRelatedExpenses|" \
-                   r"OtherCurrentLiabilitiesOthers|OtherCurrentAssetsOthers|Others)$"
+                   r"OtherCurrentLiabilitiesOthers|OtherCurrentAssetsOthers|EarningsOnOtherIncome|ExpenditureOnOtherMatters|Others)$"
 
 
 def balance_with_others(f: Filing, schema) -> list[str]:
@@ -235,20 +235,31 @@ def balance_with_others(f: Filing, schema) -> list[str]:
                 f.set_value(oth, pk, fmt_number(o - c))
                 notes.append(f"CSR expenditure ({fmt_number(c)}) taken out of 'Other expenses' for {pk}: "
                              "the taxonomy shows it as a separate expense line.")
+    mandatory = {r["element"] for r in schema.rules if r["type"].startswith("Mandatory")}
     for tot, kids in rel.items():
         others = [k for k, w in kids if re.search(OTHERS_COMPONENT, k.split("_", 1)[-1]) and w > 0]
-        if not others:
-            continue
         for pk in ("CY", "PY"):
             entered = _num(f.get_value(tot, pk))
             if entered in (None, 0):
                 continue
             vals = fill_totals(f, schema)
             parts = [(_num(vals.get(k, {}).get(pk)), w) for k, w in kids]
-            if not any(v is not None for v, _ in parts):
-                continue  # no breakdown at all: leave it to the user
             known = sum((v or 0) * Decimal(str(w)) for v, w in parts)
             rest = entered - known
+            if not others:
+                # no 'others' line: when exactly one required part is still blank, it is the remainder
+                # (e.g. Finance costs with only the interest expense line missing)
+                blank = [k for (v, w), (k, _) in zip(parts, kids) if v is None and w > 0 and k in mandatory
+                         and re.search(r"InterestExpense$", k)]
+                if len(blank) == 1 and rest > 1:
+                    f.set_value(blank[0], pk, fmt_number(rest))
+                    notes.append(f"'{schema.element(blank[0])['label']}' ({pk}) = {fmt_number(rest)}: the rest of "
+                                 f"'{schema.element(tot)['label']}' after its other lines.")
+                continue
+            if not any(v is not None for v, _ in parts):
+                # no breakdown at all: the whole amount goes to 'others', as TaxPrint does
+                if not re.search(OTHERS_COMPONENT, others[0].split("_", 1)[-1]):
+                    continue
             target = others[0]
             for _ in range(4):  # an 'other income' line can itself be a total: go down to its own 'others'
                 sub = [k for k, w in rel.get(target, []) if re.search(OTHERS_COMPONENT, k.split("_", 1)[-1]) and w > 0]

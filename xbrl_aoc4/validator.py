@@ -278,6 +278,18 @@ class Validator:
         if not self.schema.element(dep):
             return
         a, b = self.has_any(eid), self.has_any(dep)
+        if rule.get("p2"):
+            # "Yes" here <-> one of these values there (e.g. subsidiary = Yes <-> a 'Holding company' relationship)
+            wanted = {w.strip().lower() for w in rule["p2"].split(",") if w.strip()}
+            a = any(str(v).strip().lower() in ("true", "yes") for _pk, v, _t, _d in self.all_values(eid))
+            b = any(str(v).strip().lower() in wanted for _pk, v, _t, _d in self.all_values(dep))
+            if a and not b:
+                self.r.add("error", "DEPENDENCY", f"'{self.label(dep)}' must include {rule['p2']} when '{lab}' is Yes.",
+                           dep, self.section_of(dep))
+            elif b and not a:
+                self.r.add("error", "DEPENDENCY", f"'{lab}' must be Yes when '{self.label(dep)}' includes {rule['p2']}.",
+                           eid, self.section_of(eid))
+            return
         if a != b:
             missing = dep if a else eid
             other = eid if a else dep
