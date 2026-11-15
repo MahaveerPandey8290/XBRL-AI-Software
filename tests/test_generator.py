@@ -134,6 +134,25 @@ def test_documents_word_and_pdf():
     assert rows["Share capital"]["best"] == "in-gaap_ShareCapital"
 
 
+def test_nested_totals_and_autofill():
+    from xbrl_aoc4.autofill import board_report_sections
+    from xbrl_aoc4.calc import fill_totals
+    from xbrl_aoc4.schema_loader import load_schema
+    f = Filing(taxonomy="AS", fy_start="2025-04-01", fy_end="2026-03-31")
+    f.ensure_periods()
+    f.set_value("in-gaap_CurrentTaxPertainingToCurrentYear", "CY", "210")
+    f.set_value("in-gaap_DeferredTax", "CY", "-58")
+    vals = fill_totals(f, load_schema("AS"))
+    # tax expense must include current tax, which is itself a computed sub-total
+    assert vals["in-gaap_TaxExpense"]["CY"] == "152"
+    secs = board_report_sections("<p>DIRECTOR'S REPORT</p><p>1. FINANCIAL HIGHLIGHTS</p><p>Sales grew.</p>"
+                                 "<p>18. SIGNIFICANT AND MATERIAL ORDERS PASSED BY THE REGULATORS OR</p>"
+                                 "<p>COURTS OR TRIBUNALS</p><p>None.</p>")
+    heads = [h for h, _ in secs]
+    assert "FINANCIAL HIGHLIGHTS" in heads
+    assert any(h.startswith("SIGNIFICANT AND MATERIAL ORDERS") and h.endswith("TRIBUNALS") for h in heads)
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_"):

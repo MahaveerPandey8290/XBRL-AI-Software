@@ -49,6 +49,28 @@ def _open(path: Path):
             yield _Sheet(ws.title, lambda r, c, rows=rows: rows[r][c] if c < len(rows[r]) else None, len(rows), ncols)
 
 
+def sheet_names(path) -> list[str]:
+    """Sheet names only (fast: no cells or styles are loaded)."""
+    path = Path(path)
+    if path.suffix.lower() == ".xls":
+        import xlrd
+        return xlrd.open_workbook(str(path), on_demand=True).sheet_names()
+    import re as _re
+    import zipfile
+    with zipfile.ZipFile(str(path)) as z:
+        xml = z.read("xl/workbook.xml").decode("utf-8", "ignore")
+    return _re.findall(r"<(?:\w+:)?sheet\b[^>]*\bname=\"([^\"]*)\"", xml)
+
+
+def looks_like_template(path) -> bool:
+    """InstantXBRL templates name their sheets by section code (100100, 110000 ...)."""
+    import re as _re
+    try:
+        return sum(1 for n in sheet_names(path) if _re.match(r"\d{6}", n)) >= 5
+    except Exception:  # noqa: BLE001
+        return True  # let the full reader decide
+
+
 def _clean_member(label: str) -> str:
     return label.replace("[Total]", "").strip()
 

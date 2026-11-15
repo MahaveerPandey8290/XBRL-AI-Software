@@ -379,14 +379,18 @@ def financials(fid, name):
         for i, row in enumerate(data["rows"]):
             el = request.form.get(f"el_{i}", "")
             if el and request.form.get(f"use_{i}"):
-                mapping.append({"element": el, "cy": row["cy"], "py": row["py"]})
+                mapping.append({"element": el, "cy": row["cy"], "py": row["py"], "sheet": row["sheet"]})
         n = apply_mapping(f, mapping, scale)
+        from ..autofill import balance_with_others
+        from ..calc import reconcile_rounding
+        reconcile_rounding(f, schema, scale=scale)
+        balance_with_others(f, schema)
         storage.save(fid, f)
         return redirect(url_for("editor", fid=fid, applied=n))
     options = {}
     from ..importers.financials_reader import Matcher
     m = Matcher(f.taxonomy)
-    for kind in ("bs", "pl", "cf"):
+    for kind in ("bs", "pl", "cf", "note"):
         options[kind] = [{"id": c["key"], "label": c["label"] + (" (opening)" if c["key"].endswith("@start") else "")}
                          for c in m.candidates(kind)]
     return render_template("financials.html", fid=fid, f=f, name=name, data=data, options=options,

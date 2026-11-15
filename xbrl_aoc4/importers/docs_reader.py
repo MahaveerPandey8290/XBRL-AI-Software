@@ -148,7 +148,7 @@ TEXT_BLOCK_LABELS = {
     "directors": r"board of directors.? report explanatory",
     "auditors": r"auditor.?s report explanatory",
     "csr": r"corporate social responsibility explanatory",
-    "policies": r"significant accounting polic|^disclosure of accounting policies explanatory",
+    "policies": r"significant accounting polic|^disclosure of accounting policies, change in accounting policies|^disclosure of accounting policies explanatory",
 }
 
 
@@ -157,10 +157,11 @@ def text_block_for(schema, kind: str) -> str | None:
     rx = TEXT_BLOCK_LABELS.get(kind)
     if not rx:
         return None
-    for sec in schema.sections:
-        for it in sec["items"]:
-            if it.get("type") == "textBlockItemType" and re.search(rx, it.get("label", ""), re.I):
-                return it["id"]
+    for alt in rx.split("|"):  # alternatives in order of preference
+        for sec in schema.sections:
+            for it in sec["items"]:
+                if it.get("type") == "textBlockItemType" and re.search(alt, it.get("label", ""), re.I):
+                    return it["id"]
     return None
 
 

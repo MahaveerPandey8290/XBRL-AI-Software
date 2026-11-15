@@ -1,0 +1,263 @@
+"""Fill what can be worked out without asking the user.
+
+- Board's report sections: the Directors' Report is split at its headings and
+  each section goes into the matching text block (financial highlights, change
+  in nature of business, deposits, internal financial controls, ...).
+- Facts found in the documents: PAN, registered office address, number of board
+  meetings, rounding level, presentation currency.
+- Blank mandatory amounts are set to 0, as TaxPrint / InstantXBRL do for items
+  a company doesn't have (inventories, unpaid dividends, ...).
+
+Everything filled here is reported back, so the user can check it.
+"""
+from __future__ import annotations
+
+import html
+import re
+from decimal import Decimal
+
+from .model import Filing
+
+# heading of a section of the board's report -> label of the text block(s) it fills
+BOARD_SECTIONS = [
+    (r"financial (highlights|results|summary|performance)", [r"financial summary or highlights"]),
+    (r"change in (the )?nature of (the )?business", [r"change in nature of business"]),
+    (r"directors?.{0,6}(and|&) key managerial|\bkmp\b|directors and key", [r"directors or key managerial personnels who were appointed"]),
+    (r"subsidiar|joint ventures?|associate compan", [r"become or ceased to be its subsidiaries"]),
+    (r"deposits", [r"deposits covered under chapter v", r"deposits which are not in compliance"]),
+    (r"significant and material orders", [r"significant and material orders passed"]),
+    (r"internal (financial )?control", [r"adequacy of internal financial controls"]),
+    (r"risk management", [r"development and implementation of risk management policy"]),
+    (r"corporate social responsibility|\bcsr\b", [r"policy development and implementation by company on corporate social"]),
+    (r"loans?,? guarantees? or investments?|section 186", [r"loans guarantee investment under section 186"]),
+    (r"related part", [r"contracts/arrangements with related parties under section 188"]),
+    (r"annual return", [r"extract of annual return"]),
+    (r"declaration (by|of|from) independent directors", [r"declaration given by independent directors"]),
+    (r"policy on directors.{0,3} appointment|nomination and remuneration", [r"section 178\(1\)"]),
+    (r"managerial remuneration|particulars of employees|remuneration of (directors|managerial)", [r"appointment and remuneration of managerial personnels"]),
+    (r"conservation of energy", [r"^details regarding energy conservation", r"^details regarding technology absorption",
+                                 r"^details regarding foreign exchange earnings and outgo"]),
+    (r"directors?.{0,3} responsibility statement", [r"director.s responsibility statement"]),
+    (r"state of (the )?compan(y|ies).{0,3}s?.? affairs", [r"state of company.?s affairs"]),
+    (r"material changes and commitments", [r"material changes and commitments"]),
+    (r"^dividend", [r"amount recommended for dividend|dividend.*explanatory"]),
+    (r"^reserves?$|transfer to reserves", [r"amount proposed to be carried to reserves|transfer to reserves"]),
+    (r"(statutory )?auditors?.{0,3} report|comments? on (the )?auditors", [r"explanations or comments by board on qualification"]),
+    (r"secretarial audit", [r"secretarial audit"]),
+]
+
+
+def _paragraphs(doc_html: str) -> list[str]:
+    """The document as a list of HTML blocks (<p> and <table>), in order."""
+    return re.findall(r"<p>.*?</p>|<table.*?</table>", doc_html, flags=re.S)
+
+
+def _text(block: str) -> str:
+    return html.unescape(re.sub(r"<[^>]+>", " ", block)).strip()
+
+
+def _is_heading(t: str) -> bool:
+    letters = re.sub(r"[^A-Za-z]", "", t)
+    if not (3 <= len(letters) and len(t) <= 130):
+        return False
+    upper = sum(1 for c in letters if c.isupper()) / len(letters)
+    return upper > 0.8 and not t.rstrip().endswith((".", ";"))
+
+
+def board_report_sections(doc_html: str) -> list[tuple[str, str]]:
+    """[(heading, section html)] from a Directors' Report."""
+    out: list[tuple[str, list[str]]] = []
+    prev_heading = False
+    for b in _paragraphs(doc_html):
+        t = _text(b)
+        if b.startswith("<p>") and _is_heading(t) and not re.fullmatch(r"[-\d\s]+", t):
+            heading = re.sub(r"^\s*\d+[.)]?\s*", "", t)
+            wrapped = re.search(r"\b(or|and|of|under|section|with|the|on|in|to|for|by|related|foreign)$|[&,]$",
+                                out[-1][0].strip(), re.I) if out else None
+            if prev_heading and out and len(out[-1][1]) == 1 and (wrapped or re.fullmatch(r"\d+", heading)):
+                # heading wrapped over two lines ("... BY THE REGULATORS OR" / "COURTS OR TRIBUNALS")
+                out[-1] = (out[-1][0] + " " + heading, [out[-1][1][0] + b])
+            else:
+                out.append((heading, [b]))
+            prev_heading = True
+            continue
+        prev_heading = False
+        if out:
+            out[-1][1].append(b)
+    return [(h, "\n".join(bs)) for h, bs in out]
+
+
+def _find(schema, rx: str, types=("textBlockItemType", "stringItemType")) -> str | None:
+    for sec in schema.sections:
+        for it in sec["items"]:
+            if it.get("type") in types and re.search(rx, it.get("label", ""), re.I):
+                return it["id"]
+    return None
+
+
+def _local(schema, local: str) -> str | None:
+    for eid in schema.elements:
+        if eid.split("_", 1)[-1] == local:
+            return eid
+    return None
+
+
+def fill_board_report(f: Filing, schema, doc_html: str) -> list[str]:
+    notes = []
+    for heading, body in board_report_sections(doc_html):
+        h = heading.lower()
+        for rx, targets in BOARD_SECTIONS:
+            if not re.search(rx, h):
+                continue
+            for trx in targets:
+                eid = _find(schema, trx)
+                if eid and not f.get_value(eid, "CY"):
+                    el = schema.element(eid)
+                    val = body if el["type"] == "textBlockItemType" else _text(body)
+                    f.set_value(eid, "CY", val)
+                    notes.append(f"'{el['label']}' filled from the Directors' Report section '{heading.title()}'.")
+            break
+        if re.search(r"^meetings?\b|meetings of (the )?board", h):
+            n = len(re.findall(r"\b\d{1,2}[./-]\d{1,2}[./-]\d{2,4}\b", _text(body)))
+            eid = _local(schema, "NumberOfMeetingsOfBoard")
+            if n and eid and not f.get_value(eid, "CY"):
+                f.set_value(eid, "CY", str(n))
+                notes.append(f"'Number of meetings of board' set to {n} (dates listed in the Directors' Report).")
+    return notes
+
+
+ROUNDING = {1: "Actual", 1000: "Thousands", 100000: "Lakhs", 1000000: "Millions", 10000000: "Crores"}
+
+
+def fill_known_facts(f: Filing, schema, texts: list[str], scale: int = 1, has_cash_flow: bool = False,
+                     has_csr_doc: bool = False) -> list[str]:
+    """Facts that are certain or written in the documents."""
+    notes = []
+    blob = "\n".join(texts)
+
+    def put(local, value, why):
+        eid = _local(schema, local)
+        if eid and value and not f.get_value(eid, "CY"):
+            f.set_value(eid, "CY", value)
+            notes.append(f"'{schema.element(eid)['label']}' set to '{value[:80]}' ({why}).")
+
+    put("DescriptionOfPresentationCurrency", "INR", "amounts are in Indian rupees")
+    put("ContentOfReport", "Financial Statements", "the only option")
+    if scale in ROUNDING:
+        put("LevelOfRoundingUsedInFinancialStatements", ROUNDING[scale], "from the scale of the financial statements")
+    if f.taxonomy == "AS":
+        put("TypeOfIndustry", "Commercial and Industrial", "C&I taxonomy")
+    m = re.search(r"Permanent Account Number[^A-Z]{0,20}([A-Z]{5}[0-9]{4}[A-Z])", blob) or \
+        re.search(r"\bPAN\b\s*(?:No\.?|Number)?\s*[:\-]?\s*([A-Z]{5}[0-9]{4}[A-Z])", blob)
+    if m:
+        put("PermanentAccountNumberOfEntity", m.group(1), "found in the documents")
+    m = re.search(r"Reg(?:d|istered)?\.?\s*Off(?:ice)?\.?\s*[:\-–]+\s*(.+?)(?:\n\s*CIN|\n\s*E-?mail|\n\s*Tel|\n\s*Ph)", blob, re.I | re.S)
+    if m:
+        addr = re.sub(r"\s+", " ", m.group(1)).strip(" ,")
+        if 10 < len(addr) < 300:
+            put("AddressOfRegisteredOfficeOfCompany", addr, "from the Directors' Report letterhead")
+    if has_cash_flow:
+        put("WhetherCashFlowStatementIsApplicableOnCompany", "true", "a cash flow statement was uploaded")
+    if has_csr_doc:
+        put("WhetherProvisionsOfCorporateSocialResponsibilityAreApplicableOnCompany", "true", "a CSR report was uploaded")
+    return notes
+
+
+NUMERIC = ("monetaryItemType", "sharesItemType", "decimalItemType", "perShareItemType", "pureItemType",
+           "nonNegativeIntegerItemType", "integerItemType")
+
+
+def zero_blank_mandatory_amounts(f: Filing, schema, result) -> list[str]:
+    """Set blank mandatory amounts to 0 (from a validation result's MANDATORY errors).
+    An amount that is part of a total the company does report (e.g. 'Salaries and wages'
+    under employee benefit expense) is left for the user, since 0 would break the total."""
+    from .calc import fill_totals, relationships, _num
+    rel = relationships(schema)
+    parents: dict = {}
+    for tot, kids in rel.items():
+        for c, _w in kids:
+            parents.setdefault(c, set()).add(tot)
+    vals = fill_totals(f, schema)
+
+    def leaves_gap(eid, pk, depth=0):
+        """True when a total the company reported still needs this part to add up."""
+        for t in parents.get(eid, ()):
+            entered = _num(f.get_value(t, pk))
+            if entered is None:
+                if depth < 6 and leaves_gap(t, pk, depth + 1):  # a computed sub-total: look further up
+                    return True
+                continue
+            if entered == 0:
+                continue
+            known = sum((_num(vals.get(c, {}).get(pk)) or 0) * Decimal(str(w)) for c, w in rel[t])
+            if abs(known - entered) > 1:
+                return True
+        return False
+
+    done = []
+    for e in result.errors:
+        if e["code"] != "MANDATORY" or e.get("table"):
+            continue
+        el = schema.element(e["element"])
+        if not el or el.get("type") not in NUMERIC:
+            continue
+        if not f.get_value(e["element"], e["period"]) and not leaves_gap(e["element"], e["period"]):
+            f.set_value(e["element"], e["period"], "0")
+            done.append(el["label"])
+    if done:
+        uniq = sorted(set(done))
+        return [f"{len(uniq)} mandatory amount(s) the documents don't show were set to 0, as TaxPrint does "
+                f"(check any the company does have): " + ", ".join(uniq[:40]) + (" ..." if len(uniq) > 40 else "")]
+    return []
+
+
+OTHERS_COMPONENT = r"^Miscellaneous|(OtherNonoperatingIncome|PaymentForOtherServices|OtherEmployeeRelatedExpenses|" \
+                   r"OtherCurrentLiabilitiesOthers|OtherCurrentAssetsOthers|Others)$"
+
+
+def balance_with_others(f: Filing, schema) -> list[str]:
+    """When the notes give only part of a reported total's breakdown, put the rest into
+    its 'others / miscellaneous' line so the breakdown adds up (as one would by hand),
+    and say so. CSR spending that the company shows inside 'Other expenses' is moved
+    out, because the taxonomy reports it beside other expenses."""
+    from .calc import fill_totals, relationships, _num
+    from .generator import fmt_number
+    notes = []
+    rel = relationships(schema)
+    p = "in-gaap" if f.taxonomy == "AS" else "ind-as"
+    exp, oth, csr = f"{p}_Expenses", f"{p}_OtherExpenses", f"{p}_CSRExpenditure"
+    for pk in ("CY", "PY"):
+        e, o, c = (_num(f.get_value(x, pk)) for x in (exp, oth, csr))
+        if None not in (e, o, c) and c and exp in rel and csr in dict(rel[exp]) and oth in dict(rel[exp]):
+            vals = fill_totals(f, schema)
+            computed = sum((_num(vals.get(k, {}).get(pk)) or 0) * Decimal(str(w)) for k, w in rel[exp])
+            if abs(computed - e - c) <= 1:
+                f.set_value(oth, pk, fmt_number(o - c))
+                notes.append(f"CSR expenditure ({fmt_number(c)}) taken out of 'Other expenses' for {pk}: "
+                             "the taxonomy shows it as a separate expense line.")
+    for tot, kids in rel.items():
+        others = [k for k, w in kids if re.search(OTHERS_COMPONENT, k.split("_", 1)[-1]) and w > 0]
+        if not others:
+            continue
+        for pk in ("CY", "PY"):
+            entered = _num(f.get_value(tot, pk))
+            if entered in (None, 0):
+                continue
+            vals = fill_totals(f, schema)
+            parts = [(_num(vals.get(k, {}).get(pk)), w) for k, w in kids]
+            if not any(v is not None for v, _ in parts):
+                continue  # no breakdown at all: leave it to the user
+            known = sum((v or 0) * Decimal(str(w)) for v, w in parts)
+            rest = entered - known
+            target = others[0]
+            for _ in range(4):  # an 'other income' line can itself be a total: go down to its own 'others'
+                sub = [k for k, w in rel.get(target, []) if re.search(OTHERS_COMPONENT, k.split("_", 1)[-1]) and w > 0]
+                if not sub or _num(f.get_value(target, pk)) is not None:
+                    break
+                target = sub[0]
+            if rest > 1:
+                have = _num(f.get_value(target, pk)) or 0
+                f.set_value(target, pk, fmt_number(have + rest))
+                notes.append(f"'{schema.element(target)['label']}' ({pk}) given {fmt_number(rest)} more: the part of "
+                             f"'{schema.element(tot)['label']}' the notes don't break down. Move it to the right lines if you can.")
+    return notes

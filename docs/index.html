@@ -36,6 +36,12 @@ td.n { text-align:right; font-variant-numeric:tabular-nums; }
 code { background:var(--soft); padding:1px 5px; border-radius:4px; }
 .hidden { display:none; }
 .scroll { max-height:420px; overflow:auto; }
+textarea { width:100%; min-height:70px; padding:8px 9px; border:1px solid var(--line); border-radius:6px; font:inherit; background:var(--panel); color:var(--ink); resize:vertical; }
+.q { display:grid; grid-template-columns:minmax(0,1.4fr) minmax(0,1fr); gap:6px 14px; align-items:start; padding:8px 0; border-bottom:1px solid var(--line); }
+.q .lbl { font-size:14px; } .q .per { font-size:11px; color:var(--muted); margin-left:6px; white-space:nowrap; }
+.qsec { font-size:12px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); margin:16px 0 2px; }
+.notes li { margin-bottom:4px; }
+@media (max-width:600px) { .q { grid-template-columns:1fr; } }
 @media (max-width:600px) { header h1 { font-size:21px; } .panel { padding:14px; } }
 </style>
 </head>
@@ -76,6 +82,9 @@ code { background:var(--soft); padding:1px 5px; border-radius:4px; }
     <h2>3. Result</h2>
     <div id="summary"></div>
     <p><button id="download" class="btn green">Download XML</button></p>
+    <div id="questions"></div>
+    <details id="autofilled" class="hidden" style="margin:14px 0"><summary><b>Filled in automatically</b> <span class="hint">(check these)</span></summary><ul id="notes" class="hint notes"></ul></details>
+    <h2 style="margin-top:16px">Findings</h2>
     <div id="findings" class="scroll"></div>
     <div id="mapping"></div>
     <details><summary class="hint">Processing log</summary><ul id="log" class="hint"></ul></details>
@@ -120,17 +129,19 @@ async function boot() {
   }
 }
 
-$('run').addEventListener('click', async () => {
-  const files = [...$('files').files];
+let lastList = [], answers = {};
+function answersKey() { return 'aoc4-answers-' + ($('cin').value || '').trim().toUpperCase(); }
+function loadAnswers() { try { answers = JSON.parse(localStorage.getItem(answersKey()) || '{}'); } catch (e) { answers = {}; } }
+function saveAnswers() { try { localStorage.setItem(answersKey(), JSON.stringify(answers)); } catch (e) {} }
+
+async function runEngine() {
   $('run').disabled = true;
   setStatus('Processing...');
   try {
-    const list = [];
-    for (const f of files) list.push([f.name, new Uint8Array(await f.arrayBuffer())]);
     const header = {};
     for (const k of ['taxonomy','company','cin','fy_start','fy_end','nature']) header[k] = $(k).value;
-    if (files.length) { header.fy_start_given = header.fy_start; }
-    py.globals.set('files_in', py.toPy(list));
+    header.values = answers;
+    py.globals.set('files_in', py.toPy(lastList));
     py.globals.set('header_in', JSON.stringify(header));
     const out = await py.runPythonAsync("import xbrl_aoc4.browser as b\nb.process([(n, bytes(d)) for n, d in files_in], header_in)");
     show(JSON.parse(out));
@@ -138,6 +149,14 @@ $('run').addEventListener('click', async () => {
   } catch (e) {
     setStatus('Error: ' + e.message, 'err');
   } finally { $('run').disabled = false; }
+}
+
+$('run').addEventListener('click', async () => {
+  const files = [...$('files').files];
+  lastList = [];
+  for (const f of files) lastList.push([f.name, new Uint8Array(await f.arrayBuffer())]);
+  loadAnswers();
+  await runEngine();
 });
 
 function show(r) {
@@ -147,13 +166,52 @@ function show(r) {
   $('summary').innerHTML = `<div class="status ${ok ? 'ok' : 'err'}">${esc(r.company || 'Company')} &middot; ${esc(r.cin)} &middot; ${r.taxonomy === 'INDAS' ? 'Ind AS' : 'Non-Ind AS'} &middot; ${esc(r.nature)} &middot; FY ${esc(r.fy_start)} to ${esc(r.fy_end)}<br>
     ${r.facts} facts generated. ${r.errors.length} error(s), ${r.warnings.length} warning(s)${ok ? ': passes all checks.' : '. The XML can still be downloaded, but fix the errors before filing.'}</div>`;
   const names = {CY: 'Current year', PY: 'Previous year', OPEN: 'Opening'};
+  renderQuestions(r.inputs || [], names);
+  const filledNotes = r.notes || [];
+  $('autofilled').classList.toggle('hidden', !filledNotes.length);
+  $('notes').innerHTML = filledNotes.map(l => `<li>${esc(l)}</li>`).join('');
   $('findings').innerHTML = [...r.errors, ...r.warnings].slice(0, 400).map(i =>
     `<div class="finding"><span class="lvl-${i.level}">${i.level.toUpperCase()}</span> ${i.period ? '[' + names[i.period] + '] ' : ''}${esc(i.message)}</div>`).join('');
   if (r.mapped && r.mapped.length) {
     $('mapping').innerHTML = '<h2 style="margin-top:16px">Financial statement mapping</h2><div class="scroll"><table><tr><th>Caption</th><th>Current year</th><th>Previous year</th><th>XBRL element</th></tr>' +
-      r.mapped.map(m => `<tr><td>${esc(m.caption)}</td><td class="n">${Number(m.cy).toFixed(2)}</td><td class="n">${Number(m.py).toFixed(2)}</td><td>${m.element ? esc(m.label) : '<span class="hint">not mapped (use the desktop app to map it)</span>'}</td></tr>`).join('') + '</table></div>';
+      r.mapped.map(m => `<tr><td>${esc(m.caption)}</td><td class="n">${m.cy == null ? '' : Number(m.cy).toFixed(2)}</td><td class="n">${m.py == null ? '' : Number(m.py).toFixed(2)}</td><td>${m.element ? esc(m.label) : '<span class="hint">not mapped (use the desktop app to map it)</span>'}</td></tr>`).join('') + '</table></div>';
   } else { $('mapping').innerHTML = ''; }
-  $('log').innerHTML = r.log.concat(r.notes || []).map(l => `<li>${esc(l)}</li>`).join('');
+  $('log').innerHTML = r.log.map(l => `<li>${esc(l)}</li>`).join('');
+}
+
+function control(q) {
+  const id = `q|${q.element}|${q.period}`;
+  const cur = (answers[q.element] || {})[q.period] ?? '';
+  if (q.kind === 'bool') return `<select data-q="${esc(id)}"><option value="">Choose...</option><option value="true"${cur === 'true' ? ' selected' : ''}>Yes</option><option value="false"${cur === 'false' ? ' selected' : ''}>No</option></select>`;
+  if (q.kind === 'enum') return `<select data-q="${esc(id)}"><option value="">Choose...</option>${q.options.map(o => `<option${cur === o ? ' selected' : ''}>${esc(o)}</option>`).join('')}</select>`;
+  if (q.kind === 'date') return `<input type="date" data-q="${esc(id)}" value="${esc(cur)}">`;
+  if (q.kind === 'textblock') return `<textarea data-q="${esc(id)}" placeholder="Type the text, or 'Not applicable'">${esc(cur)}</textarea>`;
+  if (q.kind === 'number') return `<input type="text" inputmode="decimal" data-q="${esc(id)}" value="${esc(cur)}" placeholder="Amount in rupees (0 if none)">`;
+  return `<input type="text" data-q="${esc(id)}" value="${esc(cur)}">`;
+}
+
+function renderQuestions(inputs, names) {
+  if (!inputs.length) { $('questions').innerHTML = ''; return; }
+  let html = `<h2 style="margin-top:8px">Questions to answer (${inputs.length})</h2>
+    <p class="hint">MCA needs these and your files don't contain them. Answer what you can, then click the button: the XML is rebuilt with your answers, which this browser remembers for this CIN.</p>`;
+  let sec = null;
+  for (const q of inputs) {
+    if (q.section !== sec) { sec = q.section; html += `<div class="qsec">${esc(sec || 'Other')}</div>`; }
+    html += `<div class="q"><div class="lbl">${esc(q.label)}<span class="per">${names[q.period] || ''}</span></div><div>${control(q)}</div></div>`;
+  }
+  html += `<p style="margin-top:12px"><button id="apply" class="btn primary">Apply answers and rebuild the XML</button></p>`;
+  $('questions').innerHTML = html;
+  $('apply').addEventListener('click', async () => {
+    document.querySelectorAll('[data-q]').forEach(el => {
+      const [, eid, pk] = el.dataset.q.split('|');
+      const v = el.value.trim();
+      answers[eid] = answers[eid] || {};
+      if (v) answers[eid][pk] = v; else delete answers[eid][pk];
+    });
+    saveAnswers();
+    await runEngine();
+    $('results').scrollIntoView({behavior: 'smooth'});
+  });
 }
 
 $('download').addEventListener('click', () => {
