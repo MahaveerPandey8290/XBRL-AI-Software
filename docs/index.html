@@ -107,7 +107,9 @@ async function boot() {
     const micropip = py.pyimport('micropip');
     await micropip.install(['openpyxl', 'xlrd']);
     setStatus('Loading the AOC-4 rules and templates...');
-    const buf = await (await fetch('xbrl_aoc4.zip')).arrayBuffer();
+    const resp = await fetch('xbrl_aoc4.zip', {cache: 'no-cache'});
+    if (!resp.ok) throw new Error('the engine file xbrl_aoc4.zip was not found next to this page (HTTP ' + resp.status + ')');
+    const buf = await resp.arrayBuffer();
     py.unpackArchive(buf, 'zip', {extractDir: '/app'});
     await py.runPythonAsync("import sys; sys.path.insert(0, '/app'); import xbrl_aoc4.browser");
     $('run').disabled = false; $('run').textContent = 'Validate and generate XML';
