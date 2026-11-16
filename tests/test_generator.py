@@ -1,6 +1,7 @@
 """Run with:  python -m pytest -q   (or python tests/test_generator.py)"""
 import glob
 import os
+import re
 import sys
 import tempfile
 from pathlib import Path
@@ -230,6 +231,51 @@ def test_note_tables_from_workbook():
     assert share["in-gaap_NumberOfSharesIssued"]["CY"] == "10000" and share["in-gaap_NumberOfSharesAuthorised"]["CY"] == "20000"
     errs = [e for e in validate(f).errors if e["code"].startswith("MCA_SUM")]
     assert not errs, errs
+
+
+def test_round_to_statements_level():
+    """Amounts are rounded to whole lakhs like TaxPrint; totals are re-added and the balance sheet still balances."""
+    from xbrl_aoc4.calc import round_to_unit
+    from xbrl_aoc4.schema_loader import load_schema
+    from xbrl_aoc4.validator import validate
+    schema = load_schema("AS")
+    f = Filing(taxonomy="AS", fy_start="2025-04-01", fy_end="2026-03-31", cin="U74899DL1993PTC051877")
+    f.ensure_periods()
+    vals = {"ShareCapital": 6746250, "ReservesAndSurplus": 48134567, "ShareholdersFunds": 54880817,
+            "TradePayables": 12345678, "OtherCurrentLiabilitiesOthers": 2345678, "OtherCurrentLiabilities": 2345678,
+            "CurrentLiabilities": 14691356, "EquityAndLiabilities": 69572173,
+            "TradeReceivables": 40123456, "CashAndBankBalances": 29448717, "CurrentAssets": 69572173, "Assets": 69572173}
+    for k, v in vals.items():
+        f.set_value("in-gaap_" + k, "CY", str(v))
+    round_to_unit(f, schema, 100000)
+    g = lambda k: int(f.get_value("in-gaap_" + k, "CY"))  # noqa: E731
+    assert g("TradeReceivables") == 40100000 and g("ReservesAndSurplus") == 48100000
+    assert g("ShareCapital") == 6746250, "share capital stays to the rupee"
+    assert g("Assets") == g("EquityAndLiabilities") == 69500000
+    assert g("OtherCurrentLiabilitiesOthers") % 100000 != 0, "the share capital difference goes to other liabilities"
+    errs = [e for e in validate(f).errors if e["code"] in ("TOTAL", "BALANCE")]
+    assert not errs, errs
+
+
+def test_taxprint_layout_and_footnotes():
+    """Plain contexts in TaxPrint's order, table facts in their own LI_ block, footnotes kept."""
+    from xbrl_aoc4.importers.instance_reader import read_instance
+    f = Filing(taxonomy="AS", fy_start="2025-04-01", fy_end="2026-03-31", cin="U74899DL1993PTC051877")
+    f.set_value("in-gaap_OtherCurrentLiabilitiesOthers", "CY", "54853750")
+    f.set_value("in-gaap_PrescribedCSRExpenditure", "CY", "1736260")
+    f.set_value("in-gaap_DisclosureOfAccountingPoliciesExplanatoryTextBlock", "CY", "<p>Policies</p>")
+    f.footnotes = {"in-gaap_OtherCurrentLiabilitiesOthers": {"CY": "Cheques issued but not cleared"}}
+    f.table_row("in-gaap_DisclosureOfClassesOfShareCapitalTable", {"in-gaap_ClassesOfShareCapitalAxis": "in-gaap_EquitySharesMember"},
+                )["values"]["in-gaap_NumberOfSharesIssued"] = {"CY": "674625"}
+    xml, _ = generate(f)
+    ids = re.findall(r'<context id="([^"]+)"', xml)
+    assert ids[:5] == ["I_01042025_31032026", "D_01042025_31032026", "I_01042024_31032025", "D_01042024_31032025", "I_Opening"]
+    assert 'id="LI_1"' in xml and xml.index("<!--Tuple End -->") < xml.index('id="LI_1"')
+    assert 'decimals="2"   unitRef="INR">1736260<' in xml
+    assert "&lt;span /&gt;&lt;p&gt;Policies" in xml
+    assert "Cheques issued but not cleared</link:footnote>" in xml
+    g, _ = read_instance(xml.encode("utf-8"))
+    assert g.footnotes == f.footnotes
 
 
 if __name__ == "__main__":

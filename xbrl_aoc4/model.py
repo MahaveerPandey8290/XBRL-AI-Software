@@ -5,6 +5,8 @@ A filing holds:
 * ``meta``   - taxonomy key, CIN, reporting period dates, decimals.
 * ``values`` - non-dimensional facts: ``{element_id: {period_key: value}}``
 * ``tables`` - dimensional facts: ``{table_id: [ {"dims": {axis: member|typed}, "values": {...}} ]}``
+  (a row may also hold ``"footnotes": {element_id: {period_key: text}}``)
+* ``footnotes`` - notes attached to non-dimensional facts, written as an XBRL footnote link
 
 Period keys:
 
@@ -52,6 +54,8 @@ class Filing:
     values: dict = field(default_factory=dict)
     tables: dict = field(default_factory=dict)
     attachments: list = field(default_factory=list)
+    footnotes: dict = field(default_factory=dict)       # {element_id: {period_key: text}}; table rows carry their own
+    fact_decimals: dict = field(default_factory=dict)   # {element_id: decimals} when not the filing's default
 
     # -------------------------------------------------------------- periods
     def ensure_periods(self):
@@ -104,6 +108,7 @@ class Filing:
             "amount_unit": self.amount_unit, "company": self.company,
             "values": self.values, "tables": self.tables,
             "attachments": self.attachments,
+            "footnotes": self.footnotes, "fact_decimals": self.fact_decimals,
         }
 
     @classmethod
