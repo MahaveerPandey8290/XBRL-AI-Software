@@ -406,7 +406,7 @@ class Validator:
         for a, b in bs:
             for pk in ("CY", "PY"):
                 x, y = to_number(self.v(f"{prefix}_{a}", pk)), to_number(self.v(f"{prefix}_{b}", pk))
-                if x is not None and y is not None and abs(x - y) > Decimal("1"):
+                if x is not None and y is not None and x != y:
                     self.r.add("error", "BALANCE",
                                f"Balance sheet does not balance ({'CY' if pk == 'CY' else 'PY'}): total assets {x} vs total equity and liabilities {y}.",
                                f"{prefix}_{a}", self.section_of(f"{prefix}_{a}"), pk)

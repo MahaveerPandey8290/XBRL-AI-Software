@@ -7,6 +7,7 @@ MCA taxonomy calculation linkbase.
 from __future__ import annotations
 
 import copy
+import re
 from decimal import Decimal
 
 from .taxonomy import cached_calc
@@ -59,11 +60,25 @@ def fill_totals(filing, schema) -> dict:
     return vals
 
 
-def check_totals(filing, schema, tolerance=Decimal("1")):
-    """Yield (total_id, pk, entered, computed) where they differ."""
-    rel = relationships(schema)
+# Summations MCA checks besides the ones in the templates (a total can belong to two
+# calculation trees: cash and cash equivalents is checked against the cash flow
+# statement and against its balance sheet breakdown).
+EXTRA_RELATIONSHIPS = {
+    "AS": [
+        ("in-gaap_CashAndCashEquivalents", [("in-gaap_BalanceWithBanks", 1.0), ("in-gaap_ChequesDraftsOnHand", 1.0),
+                                            ("in-gaap_CashOnHand", 1.0), ("in-gaap_Others", 1.0)]),
+    ],
+}
+
+
+def all_relationships(schema) -> list[tuple[str, list[tuple[str, float]]]]:
+    return list(relationships(schema).items()) + EXTRA_RELATIONSHIPS.get(schema.key, [])
+
+
+def check_totals(filing, schema, tolerance=Decimal("0")):
+    """Yield (total_id, pk, entered, computed) where they differ (MCA allows no difference)."""
     vals = fill_totals(filing, schema)  # entered totals are kept; blank sub-totals are computed
-    for tot, kids in rel.items():
+    for tot, kids in all_relationships(schema):
         if tot not in filing.values:
             continue
         for pk in ("CY", "PY"):
@@ -78,23 +93,79 @@ def check_totals(filing, schema, tolerance=Decimal("1")):
                 yield tot, pk, entered, computed, kids
 
 
+# lines that must equal another fact, so a rounding difference never goes into them
+PROTECTED = re.compile(r"_(CashAndCashEquivalents|CashAndCashEquivalentsCashFlowStatement|CSRExpenditure|ProfitLoss\w*|"
+                       r"ShareCapital|NoncurrentInvestments|TradeReceivables)$")
+
+
+def _rounding_path(filing, schema, rel, kids, pk):
+    """Lines to absorb a rounding difference, from the total's line down to a leaf: at each
+    level the 'others' line if there is one, else the largest line. Every entered line on
+    the path moves by the same amount, so all the totals on the way still add up."""
+    from .autofill import OTHERS_COMPONENT
+    vals = fill_totals(filing, schema)
+    path = []
+    for _ in range(6):
+        cands = [(c, w) for c, w in kids if _num(vals.get(c, {}).get(pk)) is not None and w > 0 and not PROTECTED.search(c)]
+        if not cands:
+            break
+        oth = [c for c, _w in cands if re.search(OTHERS_COMPONENT, c.split("_", 1)[-1])] or \
+            [c for c, _w in cands if c.split("_", 1)[-1].startswith("Other")]
+        target = oth[0] if oth else max(cands, key=lambda cw: abs(_num(vals[cw[0]][pk])))[0]
+        path.append(target)
+        if target not in rel:
+            break
+        kids = rel[target]
+    return path
+
+
 def reconcile_rounding(filing, schema, per_component=Decimal("1"), scale: int = 1) -> list[str]:
-    """Make entered totals equal the sum of their components when they differ only
-    by rounding (amounts converted from lakhs / thousands are rounded to rupees one
-    by one, so a printed total can be a few rupees off its parts). Returns notes."""
+    """Amounts converted from lakhs / thousands are rounded to rupees one by one, so a
+    printed total can be a few rupees off its lines, and MCA accepts no difference. The
+    total is kept (it ties with the other statements) and the difference goes to the
+    'others' line or the largest line of its breakdown. Returns notes."""
     from .generator import fmt_number
     notes = []
-    for _ in range(4):  # inner totals first, then the totals built on them
+    rel = relationships(schema)
+    for _ in range(6):  # inner totals first, then the totals built on them
         changed = False
         for tot, pk, entered, computed, kids in list(check_totals(filing, schema)):
             n = sum(1 for c, _w in kids if _num(fill_totals(filing, schema).get(c, {}).get(pk)) is not None)
-            # amounts converted from lakhs carry tiny float noise: allow 1/1000 of the workbook unit per part
             tol = max(per_component, Decimal(scale) / 1000) * max(n, 1)
-            if abs(computed - entered) <= tol:
+            if scale >= 1000:
+                # statements printed in lakhs / thousands: a difference smaller than half the printed
+                # unit cannot be seen in them, so it is treated as rounding too
+                tol = max(tol, Decimal(scale) / 2)
+            diff = entered - computed
+            if not diff or abs(diff) > tol:
+                continue
+            path = _rounding_path(filing, schema, rel, kids, pk)
+            lab = schema.element(tot)["label"] if schema.element(tot) else tot
+            moved = [t for t in path if filing.get_value(t, pk) not in (None, "")]
+            if moved:
+                for t in moved:
+                    filing.set_value(t, pk, fmt_number((_num(filing.get_value(t, pk)) or Decimal(0)) + diff))
+                notes.append(f"'{schema.element(moved[-1])['label']}' ({pk}) adjusted by {fmt_number(diff)} so the lines of "
+                             f"'{lab}' add up exactly (rounding).")
+            else:
                 filing.set_value(tot, pk, fmt_number(computed))
-                lab = schema.element(tot)["label"] if schema.element(tot) else tot
-                notes.append(f"'{lab}' ({pk}) adjusted by {computed - entered} for rounding, to equal its components.")
-                changed = True
+                notes.append(f"'{lab}' ({pk}) adjusted by {fmt_number(-diff)} for rounding, to equal its components.")
+            changed = True
         if not changed:
             break
+    # total assets must equal total equity and liabilities exactly
+    p = "in-gaap" if schema.key == "AS" else "ind-as"
+    a, el = f"{p}_Assets", f"{p}_EquityAndLiabilities"
+    for pk in ("CY", "PY"):
+        vals = fill_totals(filing, schema)
+        x, y = _num(vals.get(a, {}).get(pk)), _num(vals.get(el, {}).get(pk))
+        if x is None or y is None or x == y or abs(x - y) > max(per_component * 10, Decimal(scale) / 2) or a not in rel:
+            continue
+        path = _rounding_path(filing, schema, rel, rel[a], pk)
+        moved = [t for t in path if filing.get_value(t, pk) not in (None, "")]
+        if moved:
+            for t in moved + ([a] if filing.get_value(a, pk) not in (None, "") else []):
+                filing.set_value(t, pk, fmt_number(_num(filing.get_value(t, pk)) + (y - x)))
+            notes.append(f"'{schema.element(moved[-1])['label']}' ({pk}) adjusted by {fmt_number(y - x)} so total assets "
+                         "equal total equity and liabilities (rounding in the statements).")
     return notes

@@ -262,7 +262,7 @@ def process(files: list, header_json: str) -> str:
         has_cf = has_cf or any(r["kind"] == "cf" for r in data["rows"])
         scale = max(scale, data["scale"])
         docs.scale = max(docs.scale, data["scale"])
-        mapping = [{"element": r["best"], "cy": r["cy"], "py": r["py"], "sheet": r["sheet"], "caption": r["caption"]}
+        mapping = [{"element": r["best"], "cy": r["cy"], "py": r["py"], "sheet": r["sheet"], "caption": r["caption"], "kind": r["kind"]}
                    for r in data["rows"] if r["best"]]
         n = apply_mapping(f, mapping, data["scale"])
         by_el: dict = {}
@@ -302,11 +302,16 @@ def process(files: list, header_json: str) -> str:
             if v not in (None, ""):
                 f.set_value(eid, pk, str(v))
     S.stage("your answer / correction")
+    from .autofill import fill_both_years
+    notes += fill_both_years(f, schema)
+    S.stage(lambda eid, pk: "same answer as the current year" if pk == "PY" else None)
     if mapped:
         notes += reconcile_rounding(f, schema, scale=scale or 1)
         S.stage("adjusted for rounding so the lines add up to the total")
         notes += balance_with_others(f, schema)
         S.stage("the part of the total the notes don't break down")
+        notes += reconcile_rounding(f, schema, scale=scale or 1)
+        S.stage("adjusted for rounding so the lines add up to the total")
         from .calc import relationships
         if inf:
             inf.nature_of_others(relationships(schema))

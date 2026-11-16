@@ -147,7 +147,7 @@ def extract_rows(rows, allow_single: bool = False):
     """Return [(caption, cy, py, note)] for rows with a caption and two amounts
     (or one amount, current year only, when allow_single: Word/PDF statements)."""
     out = []
-    section = ""
+    section = sub = ""
     for r in rows:
         cells = list(r)
         cap_i = next((i for i, v in enumerate(cells) if isinstance(v, str) and re.search(r"[A-Za-z]{3}", v)
@@ -159,6 +159,11 @@ def extract_rows(rows, allow_single: bool = False):
         m = re.search(r"(operating|investing|financing)\s+activit", caption, re.I)
         if m and (not nums or re.match(r"^\W*(?:[a-c][.)]\s*)?cash\s*flows?\s+(from|used|in|arising)", caption, re.I)):
             section = m.group(1).lower()
+            sub = "adj" if section == "operating" else ""
+        if section == "operating" and re.search(r"operating profit before|before working capital", caption, re.I):
+            sub = "wc"
+        elif section == "operating" and re.search(r"cash (generated|used) (from|in) operations", caption, re.I):
+            sub = "after"
         if len(nums) < (1 if allow_single else 2):
             continue
         note = ""
@@ -170,7 +175,8 @@ def extract_rows(rows, allow_single: bool = False):
         if len(nums) >= 3 and float(nums[0][1]).is_integer() and abs(nums[0][1]) < 100:
             note = note or str(int(nums[0][1]))
             nums = nums[1:]
-        out.append((caption, nums[0][1], nums[1][1] if len(nums) > 1 else None, note, section))
+        out.append((caption, nums[0][1], nums[1][1] if len(nums) > 1 else None, note,
+                    section + (":" + sub if sub else "")))
     return out
 
 
@@ -184,7 +190,7 @@ PATTERNS = [
     # balance sheet notes
     (r"total outstanding dues of (micro|creditors other than micro)|^msme$|micro,? small", "TradePayables"),
     (r"in current accounts?|balances? with banks? in current", "OtherBalancesWithBanks"),
-    (r"deposits?.*(not more than|less than|up ?to|within) (12|twelve) months|^fixed deposits?", "FixedDepositsWithBanks"),
+    (r"deposits?.*(not more than|less than|up ?to|within) (12|twelve) months|^fixed deposits?", "OtherDepositsWithBanks"),
     (r"deposits?.*more than (12|twelve) months", "BankDepositsWithMoreThanTwelveMonthsMaturity"),
     (r"^cash (in|on) hand", "CashOnHand"),
     (r"^cheques?,? drafts? on hand", "ChequesDraftsOnHand"),
@@ -227,7 +233,14 @@ PATTERNS = [
     (r"subscriptions?.*membership|membership fees", "SubscriptionsMembershipFees"),
     (r"bank charges", "BankCharges"),
     (r"filing fees|registration (and|&) filing", "RegistrationFilingFees"),
-    # cash flow statement
+    # cash flow statement. A third item limits a pattern to part of the operating section:
+    # 'adj' = adjustments to profit before working capital changes, 'wc' = working capital changes
+    (r"interest (received|income)|dividend (received|income)", "OtherAdjustmentsToReconcileProfitLoss", "adj"),
+    (r"interest (paid|expense)|finance costs?", "AdjustmentsForFinanceCosts", "adj"),
+    (r"^provision|(profit|loss|\(profit\)).{0,12}(sale|disposal) of|written off|non[- ]?cash", "OtherAdjustmentsForNoncashItems", "adj"),
+    (r"(increase|decrease).*(advances?|loans?|investments?|recoverable|deposits?|other (current |non[- ]current )?assets)",
+     "AdjustmentsForDecreaseIncreaseInOtherCurrentAssets", "wc"),
+    (r"buy ?back|bought back", "OtherInflowsOutflowsOfCashClassifiedAsFinancingActivities"),
     (r"interest received", "InterestReceivedClassifiedAs{sec}Activities"),
     (r"interest paid", "InterestPaidClassifiedAs{sec}Activities"),
     (r"dividends? paid", "DividendsPaidClassifiedAsFinancingActivities"),
@@ -237,7 +250,6 @@ PATTERNS = [
     (r"(increase|decrease).*other (current )?(payable|liabilit)", "AdjustmentsForIncreaseDecreaseInOtherCurrentLiabilities"),
     (r"(increase|decrease).*other current asset", "AdjustmentsForDecreaseIncreaseInOtherCurrentAssets"),
     (r"^depreciation", "AdjustmentsForDepreciationAndAmortisationExpense"),
-    (r"^provision", "AdjustmentsForProvisions"),
     (r"^(income )?tax(es)? (expenses?|paid)|^direct taxes paid", "IncomeTaxesPaidRefundClassifiedAsOperatingActivities"),
     (r"^(proceeds from )?sale of (fixed|tangible) assets?", "ProceedsFromSalesOfTangibleAssetsClassifiedAsInvestingActivities"),
     (r"^purchase of (fixed|tangible) assets?", "PurchaseOfTangibleAssetsClassifiedAsInvestingActivities"),
@@ -284,8 +296,12 @@ class Matcher:
         for c in cands:
             by_name.setdefault(c["kname"], c)
         scored = []
-        sec = (section or "operating").capitalize()
-        for rx, local in PATTERNS:
+        sec, _, sub = (section or "operating").partition(":")
+        sec = sec.capitalize()
+        for pat in PATTERNS:
+            rx, local = pat[0], pat[1]
+            if len(pat) > 2 and (kind != "cf" or pat[2] != sub):
+                continue
             local = local.format(sec=sec)
             if re.search(rx, n) and local in by_name:
                 scored.append((1.05, by_name[local]))
@@ -402,6 +418,12 @@ def _is_per_share(eid: str) -> bool:
     return eid.endswith("EarningPerEquityShare") or eid.endswith("EarningsPerEquityShare")
 
 
+def _negative_cash_flow_lines(key: str) -> set:
+    from ..calc import relationships
+    rel = relationships(load_schema(key))
+    return {c for kids in rel.values() for c, w in kids if w < 0}
+
+
 def apply_mapping(filing, mapping, source_scale: int = 1, round_to_unit: bool = False):
     """mapping: [{'element': id or id@start, 'cy': num, 'py': num, 'sheet': name}].
     Amounts are converted from the workbook's scale to the unit the filing is typed in.
@@ -412,6 +434,7 @@ def apply_mapping(filing, mapping, source_scale: int = 1, round_to_unit: bool = 
     as the printed statements show them."""
     totals = {}
     owner = {}
+    neg = _negative_cash_flow_lines(filing.taxonomy)
     for m in mapping:
         eid = m.get("element") or ""
         if not eid:
@@ -434,6 +457,10 @@ def apply_mapping(filing, mapping, source_scale: int = 1, round_to_unit: bool = 
                 else:
                     continue
             x = float(v)
+            if m.get("kind") == "cf" and eid in neg:
+                # a cash flow statement shows payments as negative figures; in XBRL the payment
+                # is reported as a positive amount that its total subtracts (weight -1)
+                x = -x
             if round_to_unit and source_scale > 1 and not _is_per_share(eid):
                 x = float(round(x))
             totals[(eid, pk)] = totals.get((eid, pk), 0.0) + x

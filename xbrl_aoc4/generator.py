@@ -73,6 +73,22 @@ def fmt_number(d: Decimal) -> str:
     return s
 
 
+_ALLOWED_ATTRS = {"colspan", "rowspan", "class"}
+
+
+def clean_xhtml(s: str) -> str:
+    """MCA validates text blocks against a strict XHTML subset: no presentational
+    attributes (border, style, width ...), and empty elements must be closed."""
+    def tag(m):
+        name, attrs, close = m.group(1), m.group(2) or "", m.group(3)
+        keep = [a for a in re.findall(r"""([a-zA-Z-]+)\s*=\s*("[^"]*"|'[^']*')""", attrs) if a[0].lower() in _ALLOWED_ATTRS]
+        out = "<" + name + "".join(f" {k.lower()}={v}" for k, v in keep)
+        if name.lower() in ("br", "hr") and not close:
+            close = "/"
+        return out + (" /" if close else "") + ">"
+    return re.sub(r"<([a-zA-Z][a-zA-Z0-9]*)(\s[^<>]*?)?\s*(/?)>", tag, s)
+
+
 def normalise(el: dict, value, scale: int = 1) -> str | None:
     """Return the XML text for a value, or None if it is empty/invalid."""
     if value is None:
@@ -88,6 +104,8 @@ def normalise(el: dict, value, scale: int = 1) -> str | None:
     s = str(value).strip()
     if not s:
         return None
+    if t == "textBlockItemType":
+        return clean_xhtml(s)
     if t == "booleanItemType":
         low = s.lower()
         if low in TRUE_WORDS:

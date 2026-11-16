@@ -38,10 +38,10 @@ BOARD_SECTIONS = [
     (r"conservation of energy", [r"^details regarding energy conservation", r"^details regarding technology absorption",
                                  r"^details regarding foreign exchange earnings and outgo"]),
     (r"directors?.{0,3} responsibility statement", [r"director.s responsibility statement"]),
-    (r"state of (the )?compan(y|ies).{0,3}s?.? affairs", [r"state of company.?s affairs"]),
-    (r"material changes and commitments", [r"material changes and commitments"]),
-    (r"^dividend", [r"amount recommended for dividend|dividend.*explanatory"]),
-    (r"^reserves?$|transfer to reserves", [r"amount proposed to be carried to reserves|transfer to reserves"]),
+    (r"state of (the )?compan(y|ies).{0,3}s?.? affairs", [r"state of company.?s affairs", r"state of compan(y|ies).{0,2} affair"]),
+    (r"material changes and commitments?", [r"material changes and commitments", r"material changes and commitment occurred"]),
+    (r"^dividend", [r"amount recommended for dividend|dividend.*explanatory", r"amount recommended to be paid as dividend"]),
+    (r"^reserves?$|transfer to reserves", [r"amount proposed to be carried to reserves|transfer to reserves", r"proposed to carry to any reserves"]),
     (r"(statutory )?auditors?.{0,3} report|comments? on (the )?auditors", [r"explanations or comments by board on qualification"]),
     (r"secretarial audit", [r"secretarial audit"]),
 ]
@@ -102,6 +102,14 @@ def _local(schema, local: str) -> str | None:
     return None
 
 
+def _strip_heading(text: str, heading: str) -> str:
+    """A plain-text item holds the section's words without its numbered heading."""
+    t = text.strip()
+    h = re.escape(heading.strip()[:40])
+    t = re.sub(r"^\W*\d*[.)]?\s*" + h + r"\S*\s*", "", t, count=1, flags=re.I)
+    return re.sub(r"\s+", " ", t).strip()[:4000]
+
+
 def fill_board_report(f: Filing, schema, doc_html: str) -> list[str]:
     notes = []
     for heading, body in board_report_sections(doc_html):
@@ -113,7 +121,7 @@ def fill_board_report(f: Filing, schema, doc_html: str) -> list[str]:
                 eid = _find(schema, trx)
                 if eid and not f.get_value(eid, "CY"):
                     el = schema.element(eid)
-                    val = body if el["type"] == "textBlockItemType" else _text(body)
+                    val = body if el["type"] == "textBlockItemType" else _strip_heading(_text(body), heading)
                     f.set_value(eid, "CY", val)
                     notes.append(f"'{el['label']}' filled from the Directors' Report section '{heading.title()}'.")
             break
@@ -236,7 +244,23 @@ def balance_with_others(f: Filing, schema) -> list[str]:
                 notes.append(f"CSR expenditure ({fmt_number(c)}) taken out of 'Other expenses' for {pk}: "
                              "the taxonomy shows it as a separate expense line.")
     mandatory = {r["element"] for r in schema.rules if r["type"].startswith("Mandatory")}
-    for tot, kids in rel.items():
+    # deposits with more than 12 months' maturity that the company shows inside cash and
+    # cash equivalents belong in 'other deposits with banks' too (the >12 months line is a disclosure)
+    from .calc import all_relationships
+    cce, d12, odb = f"{p}_CashAndCashEquivalents", f"{p}_BankDepositsWithMoreThanTwelveMonthsMaturity", f"{p}_OtherDepositsWithBanks"
+    extra = dict(all_relationships(schema)[len(rel):])
+    if cce in extra:
+        for pk in ("CY", "PY"):
+            vals = fill_totals(f, schema)
+            ent, dep = _num(f.get_value(cce, pk)), _num(f.get_value(d12, pk))
+            if ent is None or not dep:
+                continue
+            known = sum((_num(vals.get(k, {}).get(pk)) or 0) * Decimal(str(w)) for k, w in extra[cce])
+            if ent - known >= dep - 1:
+                f.set_value(odb, pk, fmt_number((_num(f.get_value(odb, pk)) or 0) + dep))
+                notes.append(f"Deposits with more than 12 months' maturity ({fmt_number(dep)}, {pk}) added to 'Other deposits "
+                             "with banks': the company shows them inside cash and cash equivalents.")
+    for tot, kids in all_relationships(schema):
         others = [k for k, w in kids if re.search(OTHERS_COMPONENT, k.split("_", 1)[-1]) and w > 0]
         for pk in ("CY", "PY"):
             entered = _num(f.get_value(tot, pk))
@@ -271,4 +295,41 @@ def balance_with_others(f: Filing, schema) -> list[str]:
                 f.set_value(target, pk, fmt_number(have + rest))
                 notes.append(f"'{schema.element(target)['label']}' ({pk}) given {fmt_number(rest)} more: the part of "
                              f"'{schema.element(tot)['label']}' the notes don't break down. Move it to the right lines if you can.")
+    return notes
+
+
+def fill_both_years(f: Filing, schema) -> list[str]:
+    """MCA wants some items for the previous year as well (Yes/No answers, reporting
+    dates, proposed dividend ...) and others for the current year only (CSR amounts).
+    Which is which comes from an accepted filing (schema/years_<taxonomy>.json)."""
+    import json
+    from pathlib import Path
+    p = Path(__file__).parent / "schema" / f"years_{schema.key}.json"
+    if not p.exists():
+        return []
+    years = json.loads(p.read_text(encoding="utf-8"))
+    notes, zeroed = [], []
+    for eid in years.get("current_year_only", []):
+        if f.get_value(eid, "PY") not in (None, ""):
+            f.set_value(eid, "PY", None)
+    for eid in years.get("both_years", []):
+        cy = f.get_value(eid, "CY")
+        if cy in (None, "") or f.get_value(eid, "PY") not in (None, ""):
+            continue
+        el = schema.element(eid)
+        if not el:
+            continue
+        local = eid.split("_", 1)[-1]
+        if local == "DateOfStartOfReportingPeriod":
+            f.set_value(eid, "PY", f.py_start)
+        elif local == "DateOfEndOfReportingPeriod":
+            f.set_value(eid, "PY", f.py_end)
+        elif el["type"] == "booleanItemType":
+            f.set_value(eid, "PY", cy)
+            notes.append(f"'{el['label']}' (previous year) = {'Yes' if cy == 'true' else 'No'}, as for the current year.")
+        elif el["type"] in NUMERIC:
+            f.set_value(eid, "PY", "0")
+            zeroed.append(el["label"])
+    if zeroed:
+        notes.append("Previous-year amounts MCA needs but the documents don't give were set to 0: " + ", ".join(zeroed[:20]))
     return notes

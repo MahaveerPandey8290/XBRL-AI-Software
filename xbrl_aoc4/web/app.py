@@ -379,7 +379,7 @@ def financials(fid, name):
         for i, row in enumerate(data["rows"]):
             el = request.form.get(f"el_{i}", "")
             if el and request.form.get(f"use_{i}"):
-                mapping.append({"element": el, "cy": row["cy"], "py": row["py"], "sheet": row["sheet"]})
+                mapping.append({"element": el, "cy": row["cy"], "py": row["py"], "sheet": row["sheet"], "kind": row["kind"]})
         n = apply_mapping(f, mapping, scale)
         from ..autofill import balance_with_others
         from ..calc import reconcile_rounding

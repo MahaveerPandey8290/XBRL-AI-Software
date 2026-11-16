@@ -26,7 +26,7 @@ INSTANT_WORDS = re.compile(
     r"Shares|Calls|Forfeited|Payable|Receivable|Commitments|Reserved|PaidUp|ShareholdingPercent|PercentageOfShareholding)", re.I)
 STRONG_INSTANT = re.compile(r"(PaidUp|FullyPaid|ReservedForIssue|PayableRelatedParty|ReceivableRelatedParty|DueForRefund|ClaimedButNotPaid|Unclaimed|Unpaid|Accrued|AsAtEnd|AtEndOf|Outstanding|Contingent|Proposed|Unspent|ClaimsAgainst)", re.I)
 
-STRONG_DURATION = re.compile(r"(SharesIssuedAs|SharesIssuedIn|SharesIssuedUnder|IssuesOfShares|BonusShares|NumberOfSharesOutstanding)", re.I)
+STRONG_DURATION = re.compile(r"(^AdjustmentsFor|ClassifiedAs\w*Activities$|SharesIssuedAs|SharesIssuedIn|SharesIssuedUnder|IssuesOfShares|BonusShares|NumberOfSharesOutstanding)", re.I)
 
 NUMERIC_TYPES = {"monetaryItemType", "sharesItemType", "decimalItemType", "percentItemType", "pureItemType",
                  "perShareItemType", "integerItemType", "nonNegativeIntegerItemType"}
@@ -44,6 +44,8 @@ def heuristic(key: str, el: dict, table: dict | None = None) -> str:
     inst_secs = INSTANT_SECTIONS_AS if key == "AS" else INSTANT_SECTIONS_INDAS
     if el.get("section") in inst_secs:
         return "instant"
+    if el.get("section") in ({"100200", "100300", "100400"} if key == "AS" else {"210000", "320000", "510000", "520000"}):
+        return "duration"  # profit and loss / cash flow statement
     if STRONG_DURATION.search(name):
         return "duration"
     if STRONG_INSTANT.search(name):

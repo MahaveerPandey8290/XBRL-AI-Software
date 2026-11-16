@@ -86,7 +86,7 @@ class Inferrer:
         for rule in (self.company_type, self.group_companies, self.related_parties, self.arms_length,
                      self.shareholders, self.audit_report, self.cost_records, self.books_and_leases,
                      self.board_meeting_date, self.csr, self.investments, self.revenue_split,
-                     self.foreign_currency, self.notes_text_blocks, self.csr_policy, self.servers):
+                     self.foreign_currency, self.notes_text_blocks, self.csr_policy, self.servers, self.general, self.revenue_detail):
             try:
                 rule()
             except Exception as e:  # noqa: BLE001 - one rule must never stop the others
@@ -224,18 +224,18 @@ class Inferrer:
 
         req = self._row_amount(r"amount required to be spent|two per ?cent of average net profit|prescribed csr")
         if req:
-            for pk, key in (("CY", "cy"), ("PY", "py")):
+            for pk, key in (("CY", "cy"),):  # MCA takes the CSR amounts for the current year only
                 if req.get(key) is not None:
                     self.put("PrescribedCSRExpenditure", money(req[key]), f"CSR note: '{req['caption'][:50]}'", pk)
                     self.put("AmountCSRToBeSpentForFinancialYear", money(req[key]), f"CSR note: '{req['caption'][:50]}'", pk)
         short = self._row_amount(r"shortfall|unspent")
         if short:
-            for pk, key in (("CY", "cy"), ("PY", "py")):
+            for pk, key in (("CY", "cy"),):
                 if short.get(key) is not None:
                     self.put("AmountUnspentCSR", money(max(0.0, short[key])), f"CSR note: '{short['caption'][:50]}' (excess spent counts as 0 unspent)", pk)
         spent = self._row_amount(r"contribution made during the year|amount spent during the year|total csr spent")
         if spent:
-            for pk, key in (("CY", "cy"), ("PY", "py")):
+            for pk, key in (("CY", "cy"),):
                 if spent.get(key) is not None:
                     self.put("AmountCSRSpentForFinancialYear", money(spent[key]), f"CSR note: '{spent['caption'][:50]}'", pk)
 
@@ -332,6 +332,62 @@ class Inferrer:
         if w:
             self.put("DisclosureWebLinkOfCompanyAtWhichCSRPolicyIsPlaced", w.group(1), "web address in the CSR report")
 
+    def general(self):
+        cin = (self.f.cin or "").upper()
+        if cin[:1] == "U":
+            self.put("WhetherCompanyIsListedCompany", NO, "the CIN starts with U (unlisted company)")
+        elif cin[:1] == "L":
+            self.put("WhetherCompanyIsListedCompany", YES, "the CIN starts with L (listed company)")
+        if not re.search(r"sustainability report|business responsibility (and sustainability )?report|\bBRSR\b", self.d.all, re.I):
+            self.put("WhetherCompanyHasPublishedSustainabilityReportForTheFinancialYear", NO,
+                     "no sustainability / business responsibility report is mentioned")
+        if any(r.get("kind") == "cf" and re.search(r"profit before tax|depreciation|working capital", r["caption"], re.I)
+               for r in self.d.rows):
+            self.put("TypeOfCashFlowStatement", "Indirect Method", "the cash flow statement starts from profit before tax")
+        from .model import parse_date
+        for pk, (a, b) in (("CY", (self.f.fy_start, self.f.fy_end)), ("PY", (self.f.py_start, self.f.py_end))):
+            da, db = parse_date(a), parse_date(b)
+            if da and db:
+                self.put("PeriodCoveredByFinancialStatements", f"{da:%d-%m-%Y} To {db:%d-%m-%Y}", "the reporting period", pk)
+        m = re.search(r"(?:total |number of |no\.? of )(?:permanent )?employees[^.\d]{0,60}?(\d[\d,]*)|(\d[\d,]*)\s+(?:permanent )?employees",
+                      self.d.all, re.I)
+        if m:
+            n = (m.group(1) or m.group(2)).replace(",", "")
+            if 0 < int(n) < 10 ** 7:
+                self.put("NumberOfEmployeesInTheCompanyAtTheEndOfTheFinancialYear", n, "number of employees stated in the documents")
+        # the CSR committee
+        for body in self.d.html.get("csr", []) + self.d.html.get("annexure", []):
+            sec = _block_between(body, r"composition of (the )?csr committee", r"^\s*\d+\s*[.)]\s|^\s*(provide|web.?link)")
+            if sec:
+                self.put("DisclosureOfCompositionOfCSRCommitteeTextBlock", sec, "the 'composition of CSR committee' in the CSR report")
+                break
+
+    def revenue_detail(self):
+        p = "in-gaap" if self.f.taxonomy == "AS" else "ind-as"
+        from decimal import Decimal
+        from .generator import fmt_number
+        for pk in ("CY", "PY"):
+            sv = self.f.get_value(f"{p}_RevenueFromSaleOfServices", pk)
+            if sv not in (None, ""):
+                self.put("RevenueFromSaleOfServicesGross", sv, "no discounts or returns are shown, so gross = net", pk)
+                fx = self.f.get_value(f"{p}_EarningsInForeignCurrency", pk)
+                if fx not in (None, "") and Decimal(fx) <= Decimal(sv):
+                    self.put("ExportRevenueServices", fx, "earnings in foreign currency (export of services)", pk)
+                    self.put("DomesticRevenueServices", fmt_number(Decimal(sv) - Decimal(fx)), "services revenue less export revenue", pk)
+                else:
+                    self.put("DomesticRevenueServices", sv, "no foreign currency earnings are shown", pk)
+                    self.put("ExportRevenueServices", "0", "no foreign currency earnings are shown", pk)
+            gp = self.f.get_value(f"{p}_RevenueFromSaleOfProducts", pk)
+            if gp not in (None, "") and Decimal(gp):
+                self.put("RevenueFromSaleOfProductsGross", gp, "no discounts or returns are shown, so gross = net", pk)
+            tr = self.f.get_value(f"{p}_TradeReceivables", pk)
+            if tr not in (None, "") and self.f.get_value(f"{p}_AllowanceForBadAndDoubtfulDebts", pk) in (None, "", "0"):
+                self.put("TradeReceivablesGross", tr, "no allowance for doubtful debts is shown", pk)
+            dep = self.f.get_value(f"{p}_DepreciationDepletionAndAmortisationExpense", pk)
+            if dep not in (None, "") and not any(self.f.get_value(f"{p}_{x}", pk) for x in
+                                                 ("DepreciationExpense", "AmortisationExpense", "DepletionExpense")):
+                self.put("DepreciationExpense", dep, "depreciation and amortisation shown as one line", pk)
+
     def servers(self):
         """Where the books are kept electronically: the registered office unless the documents say otherwise."""
         phone = self.phone
@@ -419,6 +475,22 @@ def _state_for_pin(pin: str) -> str:
     if pin.startswith("605"):
         return "Puducherry"
     return _PIN_STATE.get(pin[:2], "")
+
+
+def _block_between(body: str, start_rx: str, stop_rx: str) -> str:
+    """HTML from the paragraph matching start_rx up to (not including) the next paragraph matching stop_rx."""
+    blocks = re.findall(r"<p>.*?</p>|<table.*?</table>", body, re.S)
+    out = []
+    for b in blocks:
+        t = html.unescape(re.sub(r"<[^>]+>", " ", b)).strip()
+        if not out:
+            if re.search(start_rx, t, re.I):
+                out.append(b)
+            continue
+        if b.startswith("<p>") and re.search(stop_rx, t, re.I):
+            break
+        out.append(b)
+    return "\n".join(out) if len(out) > 1 else ""
 
 
 def _find_label(schema, rx):
