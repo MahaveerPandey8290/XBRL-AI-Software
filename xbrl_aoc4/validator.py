@@ -430,12 +430,145 @@ class Validator:
                         self.r.add("error", "TABLE", f"Column {i + 1} of '{t['title']}': enter a value for '{a['label']}'.",
                                    section="T:" + tid, table=tid)
 
+    # ------------------------------------------------------------ MCA's own checks (from its validation tool)
+    MCA_TABLE_IF_AMOUNT = [
+        ("DisclosureOfClassesOfShareCapitalTable", ["ShareCapital"]),
+        ("StatementOfChangesInReservesTable", ["ReservesAndSurplus"]),
+        ("ClassificationOfBorrowingsTable", ["LongTermBorrowings", "ShortTermBorrowings"]),
+        ("DetailsOfNoncurrentInvestmentsTable", ["NoncurrentInvestments"]),
+        ("DisclosureOfBreakupOfProvisionsTable", ["LongTermProvisions", "ShortTermProvisions"]),
+        ("LoansAndAdvancesTable", ["LongTermLoansAndAdvances", "ShortTermLoansAndAdvances"]),
+        ("SubclassificationOfTradeReceivablesTable", ["TradeReceivables"]),
+        ("DisclosureOfTangibleAssetsTable", ["TangibleAssets"]),
+        ("DisclosureOfAdditionalInformationTangibleAssetsTable", ["TangibleAssets"]),
+        ("DisclosureOfIntangibleAssetsTable", ["IntangibleAssets"]),
+        ("DisclosureOfAdditionalInformationIntangibleAssetsTable", ["IntangibleAssets"]),
+        ("DisclosureOfPrincipalProductOrServicesTable", ["RevenueFromSaleOfProducts", "RevenueFromSaleOfServices"]),
+    ]
+    MCA_TABLE_IF_YES = [
+        ("DisclosureOfShareholdingMoreThanFivePerCentInCompanyTable", "WhetherThereAreAnyShareholdersHoldingMoreThanFivePerCentSharesInCompany"),
+        ("DisclosureOfRelationshipAndTransactionsBetweenRelatedPartiesTable", "WhetherThereAreAnyRelatedPartyTransactionsDuringYear"),
+        ("DisclosureOfAuditorsQualificationsReservationsOrAdverseRemarksInAuditorsReportTable", "WhetherCompaniesAuditorsReportOrderIsApplicableOnCompany"),
+        ("ClassificationOfCSRSpendingTable", "WhetherProvisionsOfCorporateSocialResponsibilityAreApplicableOnCompany"),
+        ("DisclosureOfNetProfitsForLastThreeFinancialYearsTable", "WhetherProvisionsOfCorporateSocialResponsibilityAreApplicableOnCompany"),
+    ]
+    MCA_TABLE_ALWAYS = ["DetailsRegardingAuditorsTable", "DetailsOfDirectorsSigningBoardReportTable",
+                        "DisclosureOfKeyManagerialPersonnelsAndDirectorsAndRemunerationToKeyManagerialPersonnelsAndDirectorsTable",
+                        "DetailsOfDirectorsSigningFinancialStatementsTable"]
+    MCA_AT_LEAST_ONE = [
+        ("RevenueFromSaleOfServices", ["DomesticRevenueServices", "ExportRevenueServices"]),
+        ("RevenueFromSaleOfServices", ["BrokerageDiscountsRebatesOnRevenueFromSaleOfServices", "RevenueFromSaleOfServicesGross",
+                                       "ReturnsOnRevenueFromSaleOfServices", "OtherAllowancesDeductionsOnRevenueFromSaleOfServices"]),
+        ("DepreciationDepletionAndAmortisationExpense", ["AmortisationExpense", "DepletionExpense", "DepreciationExpense"]),
+    ]
+
+    def _lid(self, local):
+        for p in ("in-gaap_", "in-ca_"):
+            if self.schema.element(p + local) or p + local in self.schema.tables:
+                return p + local
+        return None
+
+    def check_mca(self):
+        if self.f.taxonomy != "AS":
+            return
+        n = lambda x: to_number(x)  # noqa: E731
+        fs = parse_date(self.f.fy_start)
+        if fs and fs.isoformat() > "2018-04-01":
+            for local in ("NumberOfEmployeesInTheCompanyAtTheEndOfTheFinancialYear",
+                          "WhetherCompanyHasPublishedSustainabilityReportForTheFinancialYear"):
+                eid = self._lid(local)
+                if eid and _empty(self.v(eid, "CY")):
+                    self.r.add("error", "MANDATORY", f"'{self.label(eid)}' is mandatory for years starting after 01-04-2018.",
+                               eid, self.section_of(eid), "CY")
+        for tname, faces in self.MCA_TABLE_IF_AMOUNT:
+            tid = self._lid(tname)
+            if not tid or self.f.tables.get(tid):
+                continue
+            for pk in ("CY", "PY"):
+                hit = [fc for fc in faces if self._lid(fc) and (n(self.v(self._lid(fc), pk)) or 0) != 0]
+                if hit and not (tname == "DisclosureOfPrincipalProductOrServicesTable" and pk == "PY"):
+                    self.r.add("error", "MCA_TABLE", f"MCA needs '{self.schema.tables[tid]['title']}' because "
+                               f"'{self.label(self._lid(hit[0]))}' is not zero ({pk}).", "", "T:" + tid, pk, tid)
+                    break
+        for tname, flag in self.MCA_TABLE_IF_YES:
+            tid, fid = self._lid(tname), self._lid(flag)
+            if tid and fid and str(self.v(fid, "CY")).lower() == "true" and not self.f.tables.get(tid):
+                self.r.add("error", "MCA_TABLE", f"MCA needs '{self.schema.tables[tid]['title']}' because "
+                           f"'{self.label(fid)}' is Yes.", "", "T:" + tid, "CY", tid)
+        for tname in self.MCA_TABLE_ALWAYS:
+            tid = self._lid(tname)
+            if tid and not self.f.tables.get(tid):
+                self.r.add("error", "MCA_TABLE", f"MCA always needs '{self.schema.tables[tid]['title']}'.", "", "T:" + tid, "CY", tid)
+        for parent, kids in self.MCA_AT_LEAST_ONE:
+            pid = self._lid(parent)
+            if not pid:
+                continue
+            for pk in ("CY", "PY"):
+                if (n(self.v(pid, pk)) or 0) == 0:
+                    continue
+                if not any(self._lid(k) and not _empty(self.v(self._lid(k), pk)) for k in kids):
+                    self.r.add("error", "MCA_ONE_OF", f"As '{self.label(pid)}' is given ({pk}), MCA needs at least one of: "
+                               + ", ".join(self.label(self._lid(k)) for k in kids if self._lid(k)) + ".", pid, self.section_of(pid), pk)
+        # table totals must agree with the face of the statements
+        def tsum(tname, eid_local, pick, pk):
+            tid = self._lid(tname)
+            eid = self._lid(eid_local)
+            tot, seen = 0, False
+            for row in self.f.tables.get(tid, []) if tid else []:
+                if pick(row["dims"]):
+                    v = n(row["values"].get(eid, {}).get(pk))
+                    if v is not None:
+                        tot += v
+                        seen = True
+            return tot if seen else None
+        short = lambda d: {k.split("_", 1)[1]: str(v).split("_", 1)[-1] for k, v in d.items()}  # noqa: E731
+        sums = [
+            ("DisclosureOfClassesOfShareCapitalTable", "ShareCapital", "ShareCapital",
+             lambda d: short(d).get("ClassesOfShareCapitalAxis") in ("EquitySharesMember", "PreferenceSharesMember") and len(d) == 1),
+            ("SubclassificationOfTradeReceivablesTable", "TradeReceivables", "TradeReceivables", lambda d: len(d) == 1),
+            ("DetailsOfNoncurrentInvestmentsTable", "NoncurrentInvestments", "NoncurrentInvestments", lambda d: len(d) == 1),
+            ("DisclosureOfBreakupOfProvisionsTable", "Provisions", "LongTermProvisions", lambda d: short(d).get("ClassificationBasedOnTimePeriodAxis") == "LongTermMember"),
+            ("DisclosureOfBreakupOfProvisionsTable", "Provisions", "ShortTermProvisions", lambda d: short(d).get("ClassificationBasedOnTimePeriodAxis") == "ShortTermMember"),
+            ("DisclosureOfTangibleAssetsTable", "TangibleAssets", "TangibleAssets", lambda d: list(short(d).values()) == ["OwnedAssetsMember"]),
+            ("DisclosureOfIntangibleAssetsTable", "IntangibleAssets", "IntangibleAssets", lambda d: list(short(d).values()) == ["IntangibleAssetsOtherThanInternallyGeneratedMember"]),
+        ]
+        for tname, item, face, pick in sums:
+            tid, fid = self._lid(tname), self._lid(face)
+            if not tid or not fid or not self.f.tables.get(tid):
+                continue
+            for pk in ("CY", "PY"):
+                got, want = tsum(tname, item, pick, pk), n(self.v(fid, pk))
+                if got is not None and want is not None and got != want:
+                    self.r.add("error", "MCA_SUM", f"'{self.schema.tables[tid]['title']}' adds up to {got} but "
+                               f"'{self.label(fid)}' is {want} ({pk}).", fid, "T:" + tid, pk, tid)
+        # carrying amount = gross - accumulated depreciation, for every class
+        for tname, cax, acc in (("DisclosureOfTangibleAssetsTable", "CarryingAmountAccumulatedDepreciationAndGrossCarryingAmountAxis",
+                                 "AccumulatedDepreciationAndImpairmentMember"),
+                                ("DisclosureOfIntangibleAssetsTable", "CarryingAmountAccumulatedAmortizationAndImpairmentAndGrossCarryingAmountAxis",
+                                 "AccumulatedAmortizationAndImpairmentMember")):
+            tid = self._lid(tname)
+            item = self._lid("TangibleAssets" if "Intangible" not in tname else "IntangibleAssets")
+            groups: dict = {}
+            for row in self.f.tables.get(tid, []) if tid else []:
+                d = short(row["dims"])
+                m = d.pop(cax, "CarryingAmountMember")
+                groups.setdefault(tuple(sorted(d.items())), {})[m] = row["values"].get(item, {})
+            for key, g in groups.items():
+                if not {"GrossCarryingAmountMember", acc, "CarryingAmountMember"} <= set(g):
+                    continue
+                for pk in ("CY", "PY"):
+                    a, b, c = (n(g[x].get(pk)) for x in ("GrossCarryingAmountMember", acc, "CarryingAmountMember"))
+                    if None not in (a, b, c) and a - b != c:
+                        self.r.add("error", "MCA_SUM", f"'{self.schema.tables[tid]['title']}' {dict(key) or 'total'}: carrying amount {c} "
+                                   f"should be gross {a} minus accumulated {b} ({pk}).", item, "T:" + tid, pk, tid)
+
     def run(self) -> Result:
         self.check_filing()
         self.check_types()
         self.check_rules()
         self.check_totals()
         self.check_tables()
+        self.check_mca()
         # de-duplicate
         seen, out = set(), []
         for i in self.r.items:

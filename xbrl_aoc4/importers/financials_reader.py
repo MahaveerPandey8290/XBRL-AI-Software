@@ -356,8 +356,26 @@ def _to_amounts(rows):
     return out
 
 
+_SHEETS_CACHE: dict = {}
+
+
 def _sheets(path: Path):
-    """[(name, visible, rows)] from a workbook, a Word document's tables or a PDF's pages."""
+    """[(name, visible, rows)] from a workbook, a Word document's tables or a PDF's pages (cached per file)."""
+    path = Path(path)
+    try:
+        key = (str(path), path.stat().st_mtime, path.stat().st_size)
+    except OSError:
+        key = None
+    if key and key in _SHEETS_CACHE:
+        return _SHEETS_CACHE[key]
+    out = _read_sheets(path)
+    if key:
+        _SHEETS_CACHE.clear()  if len(_SHEETS_CACHE) > 8 else None
+        _SHEETS_CACHE[key] = out
+    return out
+
+
+def _read_sheets(path: Path):
     ext = path.suffix.lower()
     if ext == ".xls":
         import xlrd

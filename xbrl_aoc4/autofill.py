@@ -204,8 +204,19 @@ def zero_blank_mandatory_amounts(f: Filing, schema, result) -> list[str]:
 
     done = []
     for e in result.errors:
-        if e["code"] != "MANDATORY" or e.get("table"):
+        if e["code"] == "TABLE" and e.get("table") in schema.tables:
+            el = schema.element(e["element"])
+            if not el or el.get("type") not in NUMERIC:
+                continue
+            for row in f.tables.get(e["table"], []):
+                if not schema.is_detail_column(e["table"], row["dims"]) or row["values"].get(e["element"]):
+                    continue
+                pks = sorted({pk for per in row["values"].values() for pk in per if pk in ("CY", "PY")}) or ["CY"]
+                row["values"][e["element"]] = {pk: "0" for pk in pks}
+                done.append(el["label"])
             continue
+        if e["code"] != "MANDATORY" or e.get("table") or "NumberOfEmployees" in e["element"]:
+            continue  # a head count is never assumed to be 0
         el = schema.element(e["element"])
         if not el or el.get("type") not in NUMERIC:
             continue

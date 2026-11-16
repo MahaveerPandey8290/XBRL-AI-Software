@@ -23,6 +23,7 @@ class Docs:
         self.text: dict[str, list[str]] = {}
         self.html: dict[str, list[str]] = {}
         self.rows: list[dict] = []   # all rows read from statements / notes (mapped or not)
+        self.sheets: list = []       # (file, sheet, visible, rows) of every workbook, for the note tables
         self.scale = 1
 
     def add(self, kind: str, text: str, body: str = ""):
@@ -338,9 +339,16 @@ class Inferrer:
             self.put("WhetherCompanyIsListedCompany", NO, "the CIN starts with U (unlisted company)")
         elif cin[:1] == "L":
             self.put("WhetherCompanyIsListedCompany", YES, "the CIN starts with L (listed company)")
-        if not re.search(r"sustainability report|business responsibility (and sustainability )?report|\bBRSR\b", self.d.all, re.I):
+        brsr = r"sustainability report|business responsibility (and sustainability )?report|\bBRSR\b"
+        m = re.search(brsr, self.d.all, re.I)
+        near = self.d.all[max(0, m.start() - 300): m.end() + 300] if m else ""
+        if m and re.search(r"annexed|forms? part of|published|attached|enclosed", near, re.I) and not re.search(r"not applicable|not required", near, re.I):
+            self.put("WhetherCompanyHasPublishedSustainabilityReportForTheFinancialYear", YES,
+                     "the directors' report says a sustainability / business responsibility report is annexed")
+        else:
             self.put("WhetherCompanyHasPublishedSustainabilityReportForTheFinancialYear", NO,
-                     "no sustainability / business responsibility report is mentioned")
+                     "no sustainability / business responsibility report is published with the accounts"
+                     if not m else "the documents say a business responsibility / sustainability report is not applicable")
         if any(r.get("kind") == "cf" and re.search(r"profit before tax|depreciation|working capital", r["caption"], re.I)
                for r in self.d.rows):
             self.put("TypeOfCashFlowStatement", "Indirect Method", "the cash flow statement starts from profit before tax")

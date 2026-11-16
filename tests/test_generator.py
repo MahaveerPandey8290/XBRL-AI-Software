@@ -176,6 +176,62 @@ def test_infer_from_document_wording():
     assert src, "each inferred value records its evidence"
 
 
+def test_note_tables_from_workbook():
+    """Fixed asset schedule, share capital, reserves and receivables notes become MCA's note tables."""
+    from xbrl_aoc4.infer import Docs
+    from xbrl_aoc4.schema_loader import load_schema
+    from xbrl_aoc4.tables import Tables
+    from xbrl_aoc4.validator import validate
+    f = Filing(taxonomy="AS", fy_start="2025-04-01", fy_end="2026-03-31", cin="U74899DL1993PTC051877")
+    f.ensure_periods()
+    for local, cy, py in (("TangibleAssets", 1500, 1300), ("ShareCapital", 100000, 100000), ("TradeReceivables", 5000, 4000),
+                          ("ReservesAndSurplus", 9000, 8000)):
+        f.set_value("in-gaap_" + local, "CY", str(cy))
+        f.set_value("in-gaap_" + local, "PY", str(py))
+    d = Docs()
+    d.sheets = [
+        ("wb.xlsx", "Note 10", True, [
+            ["NOTE 10 : PROPERTY, PLANT & EQUIPMENT"],
+            ["Description", "Gross Block", None, None, None, "Depreciation", None, None, None, "Net Block", None],
+            ["", "As at", "Additions", "Deductions", "As at", "As at", "For the year", "Deductions", "As at", "As at", "As at"],
+            ["Tangible Assets"],
+            ["Motor Cars", 1000, 0, 0, 1000, 200, 100, 0, 300, 700, 800],
+            ["Computers", 900, 400, 0, 1300, 400, 100, 0, 500, 800, 500],
+            ["Total", 1900, 400, 0, 2300, 600, 200, 0, 800, 1500, 1300],
+        ]),
+        ("wb.xlsx", "Note 3", True, [
+            ["NOTE 3 : SHARE CAPITAL"],
+            ["Authorised"],
+            ["20,000 (20,000) Equity Shares of Rs.10 each", None, 200000, 200000],
+            ["(c) Details of Shareholders holding more than 5% shares"],
+            ["Equity Shares"],
+            ["Mr. Ravi Kumar", None, 9000, 0.9, 9000, 0.9],
+            ["(d) Details of Promoter's shareholding"],
+        ]),
+        ("wb.xlsx", "Note 4-16", True, [
+            ["NOTE 4 : RESERVES AND SURPLUS"],
+            ["Surplus in the Statement of Profit and Loss"],
+            ["As per Last Balance Sheet", None, 8000, 7000],
+            ["Add : Profit for the year", None, 1000, 1000],
+            ["", None, 9000, 8000],
+        ]),
+    ]
+    schema = load_schema("AS")
+    t = Tables(f, schema, d)
+    t.run()
+    names = {k.split("_", 1)[1] for k, v in f.tables.items() if v}
+    for need in ("DisclosureOfTangibleAssetsTable", "DisclosureOfAdditionalInformationTangibleAssetsTable",
+                 "DisclosureOfClassesOfShareCapitalTable", "DisclosureOfShareholdingMoreThanFivePerCentInCompanyTable",
+                 "StatementOfChangesInReservesTable", "SubclassificationOfTradeReceivablesTable"):
+        assert need in names, need
+    cls = {r["dims"].get("in-gaap_ClassesOfTangibleAssetsAxis") for r in f.tables["in-gaap_DisclosureOfTangibleAssetsTable"]}
+    assert {"in-gaap_VehiclesMember", "in-gaap_ComputerEquipmentsMember"} <= cls
+    share = f.tables["in-gaap_DisclosureOfClassesOfShareCapitalTable"][0]["values"]
+    assert share["in-gaap_NumberOfSharesIssued"]["CY"] == "10000" and share["in-gaap_NumberOfSharesAuthorised"]["CY"] == "20000"
+    errs = [e for e in validate(f).errors if e["code"].startswith("MCA_SUM")]
+    assert not errs, errs
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_"):

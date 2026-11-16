@@ -154,7 +154,7 @@ def _review(f: Filing, schema, sources: dict) -> list[dict]:
                     for pk in ("CY", "PY"):
                         if per.get(pk) not in (None, ""):
                             row[pk.lower()] = _preview(str(per[pk]), row["kind"])
-                            row["src_" + pk.lower()] = "from the uploaded files"
+                            row["src_" + pk.lower()] = col.get("src") or "from the uploaded files"
                     if "cy" in row or "py" in row:
                         rows.append(row)
         if rows:
@@ -236,6 +236,11 @@ def process(files: list, header_json: str) -> str:
             body = _sheets_html(p)
             text = html_to_text(body)
         texts.append(text)
+        if not is_doc:
+            try:
+                docs.sheets += [(name, sn, vis, rows) for sn, vis, rows in _sheets(p)]
+            except Exception:  # noqa: BLE001
+                pass
         has_csr = has_csr or kind == "csr"
         dkind = "annexure" if kind == "directors" and "annexure" in name.lower() else kind
         docs.add(dkind or ("workbook" if not is_doc else "other"), text, body)
@@ -316,6 +321,15 @@ def process(files: list, header_json: str) -> str:
         if inf:
             inf.nature_of_others(relationships(schema))
         S.stage(None)
+    missing = []
+    if fin_files:
+        from .tables import Tables, apply_table_answers
+        tb = Tables(f, schema, docs, S.src)
+        notes += tb.run()
+        S.stage("from the notes to accounts (note tables)")
+        apply_table_answers(f, schema, h.get("values") or {})
+        answered = {k for k, per in (h.get("values") or {}).items() if any(v not in (None, "") for v in (per or {}).values())}
+        missing = [q for q in tb.missing if q["element"] not in answered]
     res = validate(f)
     if h.get("zero_fill", True):
         z = zero_blank_mandatory_amounts(f, schema, res)
@@ -328,5 +342,5 @@ def process(files: list, header_json: str) -> str:
         "taxonomy": f.taxonomy, "company": f.company, "cin": f.cin, "fy_start": f.fy_start, "fy_end": f.fy_end,
         "nature": f.nature, "errors": res.errors, "warnings": res.warnings, "log": log, "mapped": mapped,
         "xml": xml, "filename": output_filename(f), "facts": xml.count('contextRef="'), "notes": notes + warns,
-        "inputs": _inputs(res, schema), "review": _review(f, schema, S.src),
+        "inputs": _inputs(res, schema) + missing, "review": _review(f, schema, S.src),
     })
