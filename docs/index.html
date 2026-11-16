@@ -88,6 +88,7 @@ textarea { width:100%; min-height:70px; padding:8px 9px; border:1px solid var(--
     <ul class="hint">
       <li><b>Filled InstantXBRL / TaxPrint template</b> (.xls / .xlsx): every section and table is read.</li>
       <li><b>Existing XBRL instance</b> (.xml): to check or regenerate it.</li>
+      <li><b>Last year's AOC-4 XBRL</b> (.xml, filed for the previous year), uploaded with this year's documents: MCA needs last year's movement in fixed assets and last year's related party transactions, which this year's documents don't give. They are taken from it, with the directors' DIN, PAN and date of birth and the auditor's PAN, SRN and address.</li>
       <li><b>Your own financial statements workbook</b> (.xlsx): balance sheet, profit and loss and cash flow rows are matched to XBRL elements automatically; the scale (lakhs, thousands) is detected.</li>
       <li><b>Word and PDF documents</b> (.docx / .pdf): the directors' report (with its annexures), auditor's report, CSR report and notes / accounting policies go into the matching text blocks, recognised from the file name or the opening text. Balance sheet, profit and loss and cash flow statements inside a Word table or a text PDF are mapped like the workbook. Scanned PDFs have no text to read, and old .doc files must be saved as .docx first.</li>
     </ul>

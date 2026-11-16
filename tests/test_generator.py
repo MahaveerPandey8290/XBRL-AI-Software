@@ -232,6 +232,34 @@ def test_note_tables_from_workbook():
     errs = [e for e in validate(f).errors if e["code"].startswith("MCA_SUM")]
     assert not errs, errs
 
+    # MCA's row checks: the share movement and the 'due by directors' lines are filled
+    assert share["in-gaap_IncreaseDecreaseInNumberOfSharesOutstanding"]["CY"] == "0"
+    assert share["in-gaap_NumberOfSharesOutstanding"]["CY"] == "10000"
+    rec = f.tables["in-gaap_SubclassificationOfTradeReceivablesTable"][0]["values"]
+    assert rec["in-gaap_TradeReceivablesDueByFirmsOrCompaniesInWhichAnyDirectorIsPartnerOrDirector"] == {"CY": "0", "PY": "0"}
+    # with no previous-year schedule, MCA's previous-year movement is reported as missing ...
+    codes = [e["message"] for e in validate(f).errors if e["code"] == "MCA_PY"]
+    assert any("last year's movement" in m for m in codes), codes
+    # ... and last year's filing supplies it
+    prior = Filing(taxonomy="AS", fy_start="2024-04-01", fy_end="2025-03-31")
+    prior.ensure_periods()
+    for r in f.tables["in-gaap_DisclosureOfTangibleAssetsTable"]:
+        vals = {}
+        for eid, per in r["values"].items():
+            if eid.endswith("_TangibleAssets"):
+                vals[eid] = {"CY": per["PY"], "PY": str(int(per["PY"]) - 100)}
+            elif eid.endswith("_ChangesInTangibleAssets"):
+                vals[eid] = {"CY": "100"}
+        prior.table_row("in-gaap_DisclosureOfTangibleAssetsTable", dict(r["dims"]))["values"].update(vals)
+    f2 = Filing(taxonomy="AS", fy_start="2025-04-01", fy_end="2026-03-31", cin="U74899DL1993PTC051877")
+    f2.ensure_periods()
+    f2.values = {k: dict(v) for k, v in f.values.items()}
+    Tables(f2, schema, d, prior=prior).run()
+    assert not [e for e in validate(f2).errors if e["code"] == "MCA_PY" and "movement" in e["message"]]
+    row = next(r for r in f2.tables["in-gaap_DisclosureOfTangibleAssetsTable"] if len(r["dims"]) == 3)
+    st, ch = row["values"]["in-gaap_TangibleAssets"], row["values"]["in-gaap_ChangesInTangibleAssets"]
+    assert int(st["OPEN"]) + int(ch["PY"]) == int(st["PY"])
+
 
 def test_round_to_statements_level():
     """Amounts are rounded to whole lakhs like TaxPrint; totals are re-added and the balance sheet still balances."""

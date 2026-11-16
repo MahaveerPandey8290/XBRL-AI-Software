@@ -562,6 +562,115 @@ class Validator:
                         self.r.add("error", "MCA_SUM", f"'{self.schema.tables[tid]['title']}' {dict(key) or 'total'}: carrying amount {c} "
                                    f"should be gross {a} minus accumulated {b} ({pk}).", item, "T:" + tid, pk, tid)
 
+    # mandatory line items per table row, as MCA's tool reports them: (table, elements, periods, member filter)
+    MCA_ROW_REQUIRED = [
+        ("LoansAndAdvancesTable", ["LoansAndAdvancesDueByFirmsOrCompaniesInWhichAnyDirectorIsPartnerOrDirector"], ("CY", "PY"), None),
+        ("SubclassificationOfTradeReceivablesTable", ["TradeReceivablesDueByFirmsOrCompaniesInWhichAnyDirectorIsPartnerOrDirector"], ("CY", "PY"), None),
+        ("DisclosureOfRelationshipAndTransactionsBetweenRelatedPartiesTable",
+         ["AmountWrittenOffDuringPeriodInRespectOfDebtsDueFromRelatedParties", "AmountWrittenBackDuringPeriodInRespectOfDebtsDueToRelatedParties"], ("CY", "PY"), None),
+        ("DisclosureOfClassesOfShareCapitalTable", ["NumberOfSharesOutstanding", "IncreaseDecreaseInNumberOfSharesOutstanding",
+                                                    "IncreaseDecreaseInShareCapital"], ("CY", "PY"), r"EquityShares|PreferenceShares"),
+        ("DisclosureOfClassesOfShareCapitalTable", ["AmountPerShareCalledInCaseSharesNotFullyCalled"], ("CY", "PY"), r"(Equity|Preference)Shares\d+Member"),
+        ("DisclosureOfKeyManagerialPersonnelsAndDirectorsAndRemunerationToKeyManagerialPersonnelsAndDirectorsTable",
+         ["DateOfBirthOfKeyManagerialPersonnelOrDirector", "QualificationOfKeyManagerialPersonnelOrDirector", "SharesHeldByKeyManagerialPersonnelOrDirector",
+          "GrossSalaryToKeyManagerialPersonnelOrDirector", "KeyManagerialPersonnelOrDirectorRemuneration"], ("CY",), None),
+        ("DetailsRegardingAuditorsTable", ["AddressOfAuditors", "PermanentAccountNumberOfAuditorOrAuditorsFirm", "SRNOfFormADT1"], ("CY",), None),
+    ]
+    # MCA's tool knows these closed lists (the XML schema rejects anything else)
+    MCA_ENUMS = {
+        "TypeOfNoncurrentInvestments": [
+            "Investment in public sector equity instruments", "Investment in subsidiaries equity instruments",
+            "Investment in other Indian companies equity instruments", "Investment in public sector preference shares",
+            "Investment in subsidiaries preference shares", "Investment in other Indian companies preference shares",
+            "Investments in government or trust securities", "Investments in debentures or bonds", "Investments in mutual funds",
+            "Investments in partnership firms", "Investment property", "Investment in foreign sources", "Other non-current investments"],
+    }
+
+    def check_mca_rows(self):
+        if self.f.taxonomy != "AS":
+            return
+        short = lambda d: {k.split("_", 1)[1]: str(v).split("_", 1)[-1] for k, v in d.items()}  # noqa: E731
+        for tname, els, pks, member_rx in self.MCA_ROW_REQUIRED:
+            tid = self._lid(tname)
+            for i, row in enumerate(self.f.tables.get(tid, []) if tid else []):
+                if member_rx and not any(re.search(member_rx, m) for m in short(row["dims"]).values()):
+                    continue
+                for pk in pks:
+                    # a row MCA sees for that year: it has some value for the year (or its closing date)
+                    if not any(not _empty(per.get(pk)) for per in row["values"].values()):
+                        continue
+                    miss = [e for e in els if self._lid(e) and _empty(row["values"].get(self._lid(e), {}).get(pk))]
+                    if miss:
+                        self.r.add("error", "MCA_ROW", f"MCA needs {', '.join(self.label(self._lid(e)) for e in miss)} in column {i + 1} "
+                                   f"of '{self.schema.tables[tid]['title']}' ({pk}).", self._lid(miss[0]), "T:" + tid, pk, tid)
+        # previous-year movement for every asset line that has a previous-year balance
+        for tname, x in (("DisclosureOfTangibleAssetsTable", "TangibleAssets"), ("DisclosureOfIntangibleAssetsTable", "IntangibleAssets")):
+            tid, xid, cid = self._lid(tname), self._lid(x), self._lid("ChangesIn" + x)
+            rows = self.f.tables.get(tid, []) if tid else []
+            gaps = [r for r in rows if not _empty(r["values"].get(xid, {}).get("PY")) and _empty(r["values"].get(cid, {}).get("PY"))]
+            if gaps:
+                self.r.add("error", "MCA_PY", f"MCA needs last year's movement (additions, depreciation, disposals) in '{self.schema.tables[tid]['title']}' "
+                           f"for {len(gaps)} lines that have a balance on {self.f.py_end}. The documents only give this year's schedule: "
+                           "upload last year's AOC-4 XML with the documents and it is taken from there.", cid, "T:" + tid, "PY", tid)
+        rp = self._lid("WhetherThereAreAnyRelatedPartyTransactionsDuringYear")
+        tid = self._lid("DisclosureOfRelationshipAndTransactionsBetweenRelatedPartiesTable")
+        if rp and tid and str(self.v(rp, "PY")).lower() == "true" and not any(
+                not _empty(per.get("PY")) for r in self.f.tables.get(tid, []) for per in r["values"].values()):
+            self.r.add("error", "MCA_PY", "MCA needs last year's related party transactions because last year is answered Yes. "
+                       "They are not in this year's documents: upload last year's AOC-4 XML with the documents.", rp, "T:" + tid, "PY", tid)
+        # managerial remuneration remark
+        tid = self._lid("DisclosureOfAuditorsQualificationsReservationsOrAdverseRemarksInAuditorsReportTable")
+        mr = self._lid("DisclosureInAuditorsReportRelatingToManagerialRemuneration")
+        if tid and mr and self.f.tables.get(tid) and not any(not _empty(r["values"].get(mr, {}).get("CY")) for r in self.f.tables[tid]):
+            self.r.add("error", "MCA_ROW", f"MCA needs '{self.label(mr)}' in the auditors' remarks table.", mr, "T:" + tid, "CY", tid)
+        # dividend appropriations exist only on the surplus in MCA's hypercube
+        tid = self._lid("StatementOfChangesInReservesTable")
+        for r in self.f.tables.get(tid, []) if tid else []:
+            mem = short(r["dims"]).get("ComponentsOfReservesAxis", "")
+            if mem and mem != "SurplusMember":
+                bad = [e for e in r["values"] if re.search(r"_(Dividend|DividendTax)Appropriation$", e)]
+                if bad:
+                    self.r.add("error", "MCA_DIM", f"'{self.label(bad[0])}' is only allowed on the surplus, not on {mem}.", bad[0], "T:" + tid, "CY", tid)
+        # closed lists
+        for local, allowed in self.MCA_ENUMS.items():
+            eid = self._lid(local)
+            for tid2, rows in self.f.tables.items():
+                for r in rows:
+                    for pk, v in r["values"].get(eid, {}).items():
+                        if not _empty(v) and v not in allowed:
+                            self.r.add("error", "MCA_ENUM", f"'{v}' is not one of MCA's values for '{self.label(eid)}'.", eid, "T:" + tid2, pk, tid2)
+        # CSR: the average is the average of the three years; 2% of it is the prescribed amount
+        avg_id = self._lid("AverageNetProfitForLastThreeFinancialYears")
+        npt = self._lid("DisclosureOfNetProfitsForLastThreeFinancialYearsTable")
+        npe = self._lid("NetProfitComputedUnderSection198AndAdjustedAsPerRule21FOfCompaniesCSRPolicyRules2014")
+        vals = [to_number(r["values"].get(npe, {}).get("CY")) for r in self.f.tables.get(npt, [])] if npt else []
+        vals = [float(v) for v in vals if v is not None]
+        avg = to_number(self.v(avg_id, "CY")) if avg_id else None
+        avg = float(avg) if avg is not None else None
+        if vals and avg is not None and abs(avg - sum(vals) / len(vals)) > 0.01:
+            self.r.add("error", "MCA_CSR", f"'{self.label(avg_id)}' is {avg} but the average of the years in the net profits table is "
+                       f"{round(sum(vals) / len(vals), 2)}.", avg_id, self.section_of(avg_id), "CY")
+        pre = self._lid("PrescribedCSRExpenditure")
+        pv = to_number(self.v(pre, "CY")) if pre else None
+        pv = float(pv) if pv is not None else None
+        if avg is not None and pv is not None and abs(pv - round(avg * 0.02, 2)) > 0.01:
+            self.r.add("error", "MCA_CSR", f"'{self.label(pre)}' should be 2% of the average net profit ({round(avg * 0.02, 2)}), not {pv}.",
+                       pre, self.section_of(pre), "CY")
+        ag, mode = self._lid("DetailsOfImplementingAgency"), self._lid("ModeOfAmountSpent")
+        ct = self._lid("ClassificationOfCSRSpendingTable")
+        if ag and mode and ct and _empty(self.v(ag, "CY")) and any(
+                str(r["values"].get(mode, {}).get("CY", "")).lower() not in ("", "direct") for r in self.f.tables.get(ct, [])):
+            self.r.add("error", "MCA_CSR", f"'{self.label(ag)}' is needed because the CSR money was spent through an implementing agency.",
+                       ag, self.section_of(ag), "CY")
+        # an amount given for this year needs last year as well
+        for eid, per in self.f.values.items():
+            el = self.schema.element(eid) or {}
+            if el.get("section") is None or el.get("noPY") or el.get("type") not in ("monetaryItemType", "sharesItemType", "perShareItemType"):
+                continue
+            if not _empty(per.get("CY")) and _empty(per.get("PY")):
+                self.r.add("error", "MCA_PY", f"'{self.label(eid)}' is given for the current year, so MCA needs the previous year too.",
+                           eid, self.section_of(eid), "PY")
+
     def run(self) -> Result:
         self.check_filing()
         self.check_types()
@@ -569,6 +678,7 @@ class Validator:
         self.check_totals()
         self.check_tables()
         self.check_mca()
+        self.check_mca_rows()
         # de-duplicate
         seen, out = set(), []
         for i in self.r.items:

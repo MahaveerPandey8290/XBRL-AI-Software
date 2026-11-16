@@ -203,6 +203,7 @@ def process(files: list, header_json: str) -> str:
     h = json.loads(header_json or "{}")
     tax = h.get("taxonomy") or None
     f: Filing | None = None
+    prior: Filing | None = None
     log: list[str] = []
     notes: list[str] = []
     fin_files = []
@@ -210,7 +211,13 @@ def process(files: list, header_json: str) -> str:
         p = _write(name, data)
         ext = p.suffix.lower()
         if ext == ".xml":
-            f, w = read_instance(p, tax)
+            fx, w = read_instance(p, tax)
+            if h.get("fy_end") and fx.fy_end and str(fx.fy_end) < str(h["fy_end"]):
+                # last year's AOC-4: used only for the previous-year movements and opening balances
+                prior = fx
+                log.append(f"{name}: last year's filing ({fx.fy_start} to {fx.fy_end}), used for previous-year figures")
+                continue
+            f = fx
             log += [f"{name}: read {len(f.values)} items and {sum(len(r) for r in f.tables.values())} table columns"] + w[:20]
         elif ext in (".xls", ".xlsx"):
             # an InstantXBRL template has 'ValidSheet' sheets; anything else is a company workbook
@@ -361,7 +368,7 @@ def process(files: list, header_json: str) -> str:
     missing = []
     if fin_files:
         from .tables import Tables, apply_table_answers
-        tb = Tables(f, schema, docs, S.src, round_unit=unit)
+        tb = Tables(f, schema, docs, S.src, round_unit=unit, prior=prior)
         notes += tb.run()
         S.stage("from the notes to accounts (note tables)")
         apply_table_answers(f, schema, h.get("values") or {})
@@ -372,6 +379,9 @@ def process(files: list, header_json: str) -> str:
     res = validate(f)
     if h.get("zero_fill", True):
         z = zero_blank_mandatory_amounts(f, schema, res)
+        from .tables import py_zero_counterparts
+        if py_zero_counterparts(f, schema, S.src):
+            z = z or ["Amounts that are zero this year set to zero for last year too (MCA needs both years)."]
         if z:
             notes += z
             S.stage("required by MCA but not in the documents: set to 0")

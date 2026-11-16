@@ -163,6 +163,16 @@ ITC_CODES = [
 ]
 
 
+def _inv_kind(caption: str, what: str) -> str:
+    """MCA's wording for an investment in shares (TypeOfNoncurrentInvestments is a closed list)."""
+    c = caption.lower()
+    if "subsidiar" in c:
+        return f"Investment in subsidiaries {what}"
+    if re.search(r"public sector|psu|government compan", c):
+        return f"Investment in public sector {what}"
+    return f"Investment in other Indian companies {what}"
+
+
 def _classify(caption: str, classes, default: str) -> str:
     c = caption.lower()
     for rx, m in classes:
@@ -172,8 +182,9 @@ def _classify(caption: str, classes, default: str) -> str:
 
 
 class Tables:
-    def __init__(self, f: Filing, schema, docs, sources: dict | None = None, round_unit: int = 1):
+    def __init__(self, f: Filing, schema, docs, sources: dict | None = None, round_unit: int = 1, prior: Filing | None = None):
         self.f, self.schema, self.d = f, schema, docs
+        self.prior = prior  # last year's AOC-4 (an uploaded XML), for previous-year movements
         # amounts read from the notes are rounded to this many rupees (100000 = whole lakhs),
         # the level the statements are presented in, so the tables match the rounded face
         self.round_unit = max(1, int(round_unit or 1))
@@ -199,7 +210,30 @@ class Tables:
                 rule()
             except Exception as e:  # noqa: BLE001  one bad note must not stop the rest
                 self.notes.append(f"Could not build {rule.__name__.replace('_', ' ')} from the documents ({e}).")
+        self.prior_facts()
+        self.py_counterparts()
         return self.notes
+
+    PRIOR_FACTS = r"Phone|PlaceOfMaintenanceOfComputerServers|ServiceProvider|BackUp|IPAddress"
+
+    def prior_facts(self):
+        """Facts that rarely change (where the accounting data's server is, its phone ...) from last year's filing."""
+        if self.prior is None:
+            return
+        n = 0
+        for eid, per in self.prior.values.items():
+            if re.search(self.PRIOR_FACTS, eid) and per.get("CY") not in (None, "") and self.f.get_value(eid, "CY") in (None, "") \
+                    and self.schema.element(eid):
+                self.f.set_value(eid, "CY", per["CY"])
+                self.src[(eid, "CY")] = "last year's filing"
+                n += 1
+        if n:
+            self.notes.append(f"{n} facts about the accounting server (phone, address ...) taken from last year's filing.")
+
+    def py_counterparts(self):
+        n = py_zero_counterparts(self.f, self.schema, self.src)
+        if n:
+            self.notes.append(f"{n} amounts that are zero this year set to zero for last year too (MCA needs both years).")
 
     def tid(self, name):
         for p in (G, C):
@@ -256,6 +290,83 @@ class Tables:
         if why:
             row["src"] = why
         return row
+
+    def prior_rows(self, table):
+        """Rows of the same table in last year's filing (if one was uploaded): {dims: values}."""
+        tid = self.tid(table)
+        if not tid or self.prior is None:
+            return {}
+        return {json.dumps(r["dims"], sort_keys=True): r["values"] for r in self.prior.tables.get(tid, [])}
+
+    def prior_py(self, table, stock):
+        """Last year's movement becomes this filing's previous-year movement, last year's opening our opening."""
+        prev = self.prior_rows(table)
+        tid = self.tid(table)
+        if not prev or not tid:
+            return 0
+        n = 0
+        for row in self.f.tables.get(tid, []):
+            pv = prev.get(json.dumps(row["dims"], sort_keys=True))
+            if not pv:
+                continue
+            for eid, per in pv.items():
+                name = eid.split("_", 1)[1]
+                if name == stock:
+                    if per.get("PY") not in (None, ""):
+                        row["values"].setdefault(eid, {})["OPEN"] = per["PY"]
+                elif per.get("CY") not in (None, "") and row["values"].get(eid, {}).get("PY") in (None, ""):
+                    el = self.schema.element(eid) or {}
+                    if el.get("type") in ("monetaryItemType", "sharesItemType", "decimalItemType") or table.startswith("DisclosureOf"):
+                        row["values"].setdefault(eid, {})["PY"] = per["CY"]
+            # keep opening + movement = closing even if last year's figures were rounded differently
+            st = next((e for e in row["values"] if e.endswith("_" + stock)), None)
+            ch = next((e for e in row["values"] if e.endswith("_ChangesIn" + stock)), None)
+            if st and ch:
+                try:
+                    row["values"][st]["OPEN"] = str(int(Decimal(row["values"][st]["PY"]) - Decimal(row["values"][ch]["PY"])))
+                except Exception:  # noqa: BLE001
+                    pass
+            n += 1
+        if n:
+            self.notes.append(f"Previous year's movement in '{self.schema.tables[tid]['title']}' taken from last year's filing ({n} rows).")
+        return n
+
+    def prior_same_person(self, table, name_el, fields):
+        """Fill identity facts (DIN, PAN, date of birth ...) a person or firm already had in last year's filing."""
+        tid = self.tid(table)
+        prev = self.prior_rows(table)
+        if not tid or not prev:
+            return 0
+        by_name = {}
+        for v in prev.values():
+            nm = next((per.get("CY") for e, per in v.items() if e.endswith("_" + name_el)), None)
+            if nm:
+                by_name[_key(nm)] = v
+        n = 0
+        for row in self.f.tables.get(tid, []):
+            nm = next((per.get("CY") for e, per in row["values"].items() if e.endswith("_" + name_el)), None)
+            if not nm:
+                continue
+            pv = next((v for k, v in by_name.items() if _same(k, _key(nm)) or k.startswith(_key(nm)[:10]) or _key(nm).startswith(k[:10])), None)
+            if not pv:
+                continue
+            for eid, per in pv.items():
+                if eid.split("_", 1)[1] in fields and per.get("CY") not in (None, "") and row["values"].get(eid, {}).get("CY") in (None, ""):
+                    row["values"].setdefault(eid, {})["CY"] = per["CY"]
+                    n += 1
+        return n
+
+    def zeros(self, table, rx, pks=("CY", "PY"), skip=()) -> dict:
+        """0 for every amount line of a table whose name matches rx (TaxPrint fills these; MCA requires several)."""
+        tid = self.tid(table)
+        out = {}
+        for eid in self.schema.tables[tid]["item_ids"] if tid else []:
+            name = eid.split("_", 1)[1]
+            el = self.schema.element(eid) or {}
+            if re.search(rx, name) and name not in skip and el.get("type") in ("monetaryItemType", "sharesItemType", "decimalItemType") \
+                    and not el.get("abstract"):
+                out[name] = {pk: 0 for pk in pks}
+        return out
 
     def ask(self, table, dims, local, label, why=""):
         """Record a fact the documents don't give, for the page to ask."""
@@ -443,12 +554,16 @@ class Tables:
             for m, a in list(classes.items()) + [("", tot)]:
                 go, ga, gd, gc, do, dy, dd, dc = a
                 base = {ClsAx: m} if m else {}
-                gross = {X: {"CY": gc, "PY": go}, "ChangesIn" + X: {"CY": ga - gd}}
+                # changes are closing - opening, so gross - accumulated = carrying holds for the movement too;
+                # anything additions/disposals/depreciation don't explain goes to other adjustments
+                adj_g, adj_d = (gc - go) - (ga - gd), (dc - do) - (dy - dd)
+                Adj = ["OtherAdjustments" + X + "Others", "OtherAdjustments" + X]
+                gross = {X: {"CY": gc, "PY": go}, "ChangesIn" + X: {"CY": gc - go}}
                 for e in Add:
                     gross[e] = {"CY": ga}
                 for e in Disp:
                     gross[e] = {"CY": gd}
-                accd = {X: {"CY": dc, "PY": do}, Dep: {"CY": dy}, "ChangesIn" + X: {"CY": dy - dd}}
+                accd = {X: {"CY": dc, "PY": do}, Dep: {"CY": dy}, "ChangesIn" + X: {"CY": dc - do}}
                 for e in Disp:
                     accd[e] = {"CY": dd}
                 net = {X: {"CY": gc - dc, "PY": go - do}, Dep: {"CY": -dy}, "ChangesIn" + X: {"CY": (gc - dc) - (go - do)}}
@@ -456,6 +571,8 @@ class Tables:
                     net[e] = {"CY": ga}
                 for e in Disp:
                     net[e] = {"CY": gd - dd}
+                for e in Adj:
+                    gross[e], accd[e], net[e] = {"CY": adj_g}, {"CY": adj_d}, {"CY": adj_g - adj_d}
                 self.put_row(T, dict(base, **{SubAx: Sub, CAx: "GrossCarryingAmountMember"}), gross, self._why)
                 self.put_row(T, dict(base, **{SubAx: Sub, CAx: Acc}), accd, self._why)
                 self.put_row(T, dict(base, **{SubAx: Sub}), net, self._why)
@@ -487,6 +604,8 @@ class Tables:
                 dep_total = sum(a[5] for a in classes.values())
             self.notes.append(f"{'Tangible' if tang else 'Intangible'} assets table built from the fixed asset schedule "
                               f"({len(classes)} classes), carrying amounts matched to the balance sheet.")
+        for t, x in (("DisclosureOfTangibleAssetsTable", "TangibleAssets"), ("DisclosureOfIntangibleAssetsTable", "IntangibleAssets")):
+            self.prior_py(t, x)
         # split the P&L depreciation line into depreciation and amortisation
         dda = self.face("DepreciationDepletionAndAmortisationExpense")
         if dda is not None and acc["tangible"]:
@@ -574,11 +693,50 @@ class Tables:
                       "ApplicationMoneyReceivedForAllotmentOfSecuritiesAndDueForRefundPrincipal",
                       "ApplicationMoneyReceivedForAllotmentOfSecuritiesAndDueForRefundInterestAccrued"):
                 vals.setdefault(e, {})[pk] = 0
+        # movement in the number of shares (MCA needs it for both years): opening from the reconciliation
+        T = "DisclosureOfClassesOfShareCapitalTable"
+        recon = self._capital_text()
+        py_open = None
+        m = re.search(r"opening balance[^\n]*?\s([\d.]+)\s+[\d.]+\s+([\d.]+)\s+[\d.]+\s*$", recon, re.I | re.M)
+        if m and float(m.group(2)) >= 1000:
+            py_open = int(float(m.group(2)))
+        cy_n, py_n = rows.get("CY"), rows.get("PY")
+        if py_n is not None and py_open is None:
+            py_open = py_n
+        mv = self.zeros(T, r"DuringPeriod$|DuringLastFiveYears$|^NumberOfShares(IssuedIn|IssuedAs|Allotted|IssuedUnder|BoughtBack|Redeemed)|"
+                           r"^NumberOfOtherIssue|^DecreaseIn|^OtherDecrease|^IncreaseDecreaseIn(NumberOfSharesOutstanding|ShareCapital)$")
+        bought = re.search(r"buy[- ]?back|bought back|deletions?", recon + " " + self.d.all[:200000], re.I)
+        for pk, close, open_ in (("CY", cy_n, py_n), ("PY", py_n, py_open)):
+            if close is None or open_ is None:
+                continue
+            ch = close - open_
+            amt = int(ch * par)
+            mv["IncreaseDecreaseInNumberOfSharesOutstanding"][pk] = ch
+            mv["IncreaseDecreaseInShareCapital"][pk] = amt
+            if ch < 0:
+                n_el, a_el = ("NumberOfSharesBoughtBack", "DecreaseInAmountOfSharesBoughtBack") if bought else ("OtherDecreaseInNumberOfShares", "OtherDecreaseInAmountOfShares")
+                for e, v in ((n_el, -ch), (a_el, -amt), ("DecreaseInShareCapitalDuringPeriod", -amt), ("DecreaseInNumberOfSharesDuringPeriod", -ch)):
+                    if e in mv:
+                        mv[e][pk] = v
+            elif ch > 0:
+                for e, v in (("NumberOfOtherIssuesOfShares", ch), ("AmountOfOtherIssuesDuringPeriod", amt),
+                             ("AggregateNumberOfSharesIssuedDuringPeriod", ch), ("AggregateAmountOfIncreaseInShareCapitalDuringPeriod", amt)):
+                    if e in mv:
+                        mv[e][pk] = v
+        bb = sum(mv.get("NumberOfSharesBoughtBack", {}).values())
+        if bb and "AggregateNumberOfSharesBoughtBackDuringLastFiveYears" in mv:
+            mv["AggregateNumberOfSharesBoughtBackDuringLastFiveYears"] = {"CY": bb, "PY": mv["NumberOfSharesBoughtBack"].get("PY", 0)}
+        vals.update(mv)
+        out = {pk: n for pk, n in (("CY", cy_n), ("PY", py_n), ("OPEN", py_open)) if n is not None}
+        vals["NumberOfSharesOutstanding"] = dict(out)
+        if "OPEN" in out:
+            vals.setdefault("ShareCapital", {})["OPEN"] = int(out["OPEN"] * par)
         why = "share capital note"
         self.put_row("DisclosureOfClassesOfShareCapitalTable", {"ClassesOfShareCapitalAxis": "EquitySharesMember"}, vals, why)
         v1 = dict(vals)
         v1["TypeOfShare"] = {pk: "EQUITY" for pk in rows}
         v1["ParValuePerShare"] = {pk: pr for pk in rows}
+        v1["AmountPerShareCalledInCaseSharesNotFullyCalled"] = {pk: 0 for pk in rows}
         self.put_row("DisclosureOfClassesOfShareCapitalTable", {"ClassesOfShareCapitalAxis": "EquityShares1Member"}, v1, why)
         self.shares = rows
         for pk in ("CY", "PY"):
@@ -701,11 +859,17 @@ class Tables:
                     k = "OtherDeductionsToReserves"
                 less[k][0] += cy
                 less[k][1] += py
+            if c["member"] != "SurplusMember":
+                # MCA's hypercube allows dividend appropriations only on the surplus
+                for k in ("DividendAppropriation", "DividendTaxAppropriation"):
+                    for i in (0, 1):
+                        less["OtherDeductionsToReserves"][i] += less[k][i]
+                    del less[k]
             for k, (a, b) in list(adds.items()) + list(less.items()):
                 vals[k] = {"CY": a, "PY": b}
             add_t = [adds["ProfitLossForPeriod"][i] + adds["OtherAdditionsToReserves"][i] for i in (0, 1)]
             ded_t = [less["OtherDeductionsToReserves"][i] for i in (0, 1)]
-            app_t = [less["TransferToGeneralReserve"][i] + less["DividendAppropriation"][i] + less["DividendTaxAppropriation"][i] for i in (0, 1)]
+            app_t = [less["TransferToGeneralReserve"][i] + less.get("DividendAppropriation", [0, 0])[i] + less.get("DividendTaxAppropriation", [0, 0])[i] for i in (0, 1)]
             vals["AdditionsToReserves"] = {"CY": add_t[0], "PY": add_t[1]}
             vals["DeductionsToReserves"] = {"CY": ded_t[0], "PY": ded_t[1]}
             vals["AppropriationsForDividendDividendTaxAndGeneralReserve"] = {"CY": app_t[0], "PY": app_t[1]}
@@ -802,7 +966,8 @@ class Tables:
                     self.src[(eid, pk)] = "trade receivables ageing in the notes (over six months)"
         member = "SecuredConsideredGoodMember" if re.search(r"(?<!un)secured", txt) and "unsecured" not in txt else "UnsecuredConsideredGoodMember"
         allow_cy, allow_py = self.face("AllowanceForBadAndDoubtfulDebts", "CY"), self.face("AllowanceForBadAndDoubtfulDebts", "PY")
-        vals = {"TradeReceivables": {"CY": cy, "PY": py}, "TradeReceivablesGross": {"CY": cy, "PY": py}}
+        vals = self.zeros("SubclassificationOfTradeReceivablesTable", r"DueBy")
+        vals.update({"TradeReceivables": {"CY": cy, "PY": py}, "TradeReceivablesGross": {"CY": cy, "PY": py}})
         if allow_cy or allow_py:
             vals["TradeReceivablesGross"] = {"CY": (cy or 0) + (allow_cy or 0), "PY": (py or 0) + (allow_py or 0)}
             vals["AllowanceForBadAndDoubtfulDebts"] = {"CY": allow_cy or 0, "PY": allow_py or 0}
@@ -846,7 +1011,8 @@ class Tables:
             for k, a, b in zip(ks, fc, fp):
                 self.put_row("LoansAndAdvancesTable", {"ClassificationBasedOnTimePeriodAxis": member, "ClassificationOfLoansAndAdvancesAxis": k,
                                                        "ClassificationOfAssetsBasedOnSecurityAxis": "UnsecuredConsideredGoodMember"},
-                             {"LoansAndAdvancesGross": {"CY": a, "PY": b}, "LoansAndAdvances": {"CY": a, "PY": b}},
+                             dict(self.zeros("LoansAndAdvancesTable", r"DueBy"),
+                                  LoansAndAdvancesGross={"CY": a, "PY": b}, LoansAndAdvances={"CY": a, "PY": b}),
                              f"{face.replace('LoansAndAdvances', '').replace('Term', '-term ').lower()}loans and advances note")
 
     # ------------------------------------------------------------ borrowings
@@ -934,8 +1100,10 @@ class Tables:
             if cap and not nums:
                 if re.search(r"mutual fund", c):
                     kind = "Investments in mutual funds"
+                elif re.search(r"preference", c):
+                    kind = _inv_kind(c, "preference shares")
                 elif re.search(r"equity|shares", c):
-                    kind = "Investments in equity instruments"
+                    kind = _inv_kind(c, "equity instruments")
                 elif re.search(r"debenture|bond", c):
                     kind = "Investments in debentures or bonds"
                 elif re.search(r"government|gold", c):
@@ -952,7 +1120,7 @@ class Tables:
             if re.search(r"\b(fund|scheme|series)\b", c):
                 k = "Investments in mutual funds"
             elif re.search(r"private limited|pvt|limited|ltd", c):
-                k = "Investments in equity instruments"
+                k = kind if kind.startswith("Investment in ") else _inv_kind(c, "preference shares" if "preference" in c else "equity instruments")
             else:
                 k = kind
             items.append([cap, a, b, k])
@@ -1099,6 +1267,9 @@ class Tables:
                 "DateOfSigningAuditReportByAuditors": {"CY": date}, "DateOfSigningOfBalanceSheetByAuditors": {"CY": date},
                 "PermanentAccountNumberOfAuditorOrAuditorsFirm": {"CY": pan}}
         self.put_row("DetailsRegardingAuditorsTable", dims, vals, "auditors' report and balance sheet signature")
+        self.prior_same_person("DetailsRegardingAuditorsTable", "NameOfAuditFirm",
+                               {"PermanentAccountNumberOfAuditorOrAuditorsFirm", "SRNOfFormADT1", "AddressOfAuditors",
+                                "FirmsRegistrationNumberOfAuditFirm"})
         self.ask("DetailsRegardingAuditorsTable", dims, "PermanentAccountNumberOfAuditorOrAuditorsFirm", "PAN of the audit firm")
         self.ask("DetailsRegardingAuditorsTable", dims, "SRNOfFormADT1", "SRN of form ADT-1 (auditor's appointment)")
         self.ask("DetailsRegardingAuditorsTable", dims, "AddressOfAuditors", "Address of the audit firm")
@@ -1168,9 +1339,13 @@ class Tables:
             return
         sheet = self._rp_sheet()
         pay = {}
-        for head, name, amt in sheet:
-            if re.search(r"remunera|salary", head, re.I):
-                pay[_key(name)] = amt
+        for name, nature, rel, amt in self._rp_note():
+            if re.search(r"remun|salary", nature, re.I):
+                pay[_key(name)] = pay.get(_key(name), 0) + amt
+        if not pay:
+            for head, name, amt in sheet:
+                if re.search(r"remun|salary", head, re.I):
+                    pay[_key(name)] = amt
         holdings = {}
         rows, _ = self.note(r"share\s*capital")
         for cap, nums in rows:
@@ -1188,9 +1363,13 @@ class Tables:
             pan = self.pan_of(nm)
             sal = next((v for k, v in pay.items() if _same(k, nm)), None)
             held = next((v for k, v in holdings.items() if _same(k, nm)), None)
-            vals = {"NameOfKeyManagerialPersonnelOrDirector": {"CY": nm.upper()}, "DesignationOfKeyManagerialPersonnelOrDirector": {"CY": "Director"},
+            T = "DisclosureOfKeyManagerialPersonnelsAndDirectorsAndRemunerationToKeyManagerialPersonnelsAndDirectorsTable"
+            vals = self.zeros(T, r"KeyManagerialPersonnelOrDirector(Remuneration)?$", pks=("CY",))
+            vals.pop("CeilingAsPerActKeyManagerialPersonnelOrDirectorRemuneration", None)
+            vals["SharesHeldByKeyManagerialPersonnelOrDirector"] = {"CY": 0}
+            vals.update({"NameOfKeyManagerialPersonnelOrDirector": {"CY": nm.upper()}, "DesignationOfKeyManagerialPersonnelOrDirector": {"CY": "Director"},
                     "DirectorIdentificationNumberOfKeyManagerialPersonnelOrDirector": {"CY": din},
-                    "PermanentAccountNumberOfKeyManagerialPersonnelOrDirector": {"CY": pan}}
+                    "PermanentAccountNumberOfKeyManagerialPersonnelOrDirector": {"CY": pan}})
             if held:
                 vals["SharesHeldByKeyManagerialPersonnelOrDirector"] = {"CY": held}
             if sal:
@@ -1198,26 +1377,59 @@ class Tables:
                     vals[e] = {"CY": sal}
             self.put_row("DisclosureOfKeyManagerialPersonnelsAndDirectorsAndRemunerationToKeyManagerialPersonnelsAndDirectorsTable", dims, vals, why)
             T = "DisclosureOfKeyManagerialPersonnelsAndDirectorsAndRemunerationToKeyManagerialPersonnelsAndDirectorsTable"
-            if not din:
-                self.ask(T, dims, "DirectorIdentificationNumberOfKeyManagerialPersonnelOrDirector", f"DIN of {nm.upper()}")
-            if not pan:
-                self.ask(T, dims, "PermanentAccountNumberOfKeyManagerialPersonnelOrDirector", f"PAN of {nm.upper()}")
+            self.prior_same_person(T, "NameOfKeyManagerialPersonnelOrDirector",
+                                   {"DirectorIdentificationNumberOfKeyManagerialPersonnelOrDirector", "PermanentAccountNumberOfKeyManagerialPersonnelOrDirector",
+                                    "DateOfBirthOfKeyManagerialPersonnelOrDirector", "QualificationOfKeyManagerialPersonnelOrDirector"})
+            self.ask(T, dims, "DirectorIdentificationNumberOfKeyManagerialPersonnelOrDirector", f"DIN of {nm.upper()}")
+            self.ask(T, dims, "PermanentAccountNumberOfKeyManagerialPersonnelOrDirector", f"PAN of {nm.upper()}")
             self.ask(T, dims, "DateOfBirthOfKeyManagerialPersonnelOrDirector", f"Date of birth of {nm.upper()}")
+            self.ask(T, dims, "QualificationOfKeyManagerialPersonnelOrDirector", f"Qualification of {nm.upper()} (e.g. Graduate)")
         self.notes.append(f"Directors / KMP table: {len(names)} people from the related party note.")
 
     RP_KINDS = [
-        (r"remunera|salary", "RemunerationForKeyManagerialPersonnel", "Directors remuneration"),
-        (r"\brent\b|lease", "LeasesAsLesseeRelatedPartyTransactions", "Rent paid"),
-        (r"income|receipt|sale", "RevenueFromRenderingOfServicesRelatedPartyTransactions", "Services rendered"),
-        (r"operational|freight|service|expense", "ServicesReceivedRelatedPartyTransactions", "Services received"),
-        (r"loan given|advance given", "AdvancesGivenDuringYearRelatedPartyTransactions", "Advances given"),
-        (r"loan taken|advance taken|loan received", "AdvancesTakenDuringYearRelatedPartyTransactions", "Advances taken"),
+        (r"remun|salary", "RemunerationForKeyManagerialPersonnel", "Directors remuneration"),
+        (r"outstanding.*(payable|creditor)|payable", "AmountsPayableRelatedPartyTransactions", "Outstanding payable"),
+        (r"outstanding.*(loan|advance|receivable)|receivable", "AmountsReceivableRelatedPartyTransactions", "Outstanding receivable"),
+        (r"received back|repaid|refund", "AdvancesTakenDuringYearRelatedPartyTransactions", "Loan / advance received back"),
+        (r"loan given|advance given|loan/ ?advance given", "AdvancesGivenDuringYearRelatedPartyTransactions", "Loan / advance given"),
+        (r"loan taken|advance taken|loan received|borrow", "AdvancesTakenDuringYearRelatedPartyTransactions", "Loan / advance taken"),
         (r"interest paid", "InterestPaidDuringYearRelatedPartyTransactions", "Interest paid"),
         (r"interest received", "InterestReceivedDuringYearRelatedPartyTransactions", "Interest received"),
+        (r"income|receipt|sale|rendered", "OtherRelatedPartyTransactionsIncome", "Income"),
+        (r"\brent\b|lease|operational|freight|service|expense|uniform|welfare|purchase", "OtherRelatedPartyTransactionsExpense", "Expenses"),
     ]
+    RP_STOCK = ("AmountsPayableRelatedPartyTransactions", "AmountsReceivableRelatedPartyTransactions")
+    COMPANY_RX = r"(limited|ltd|llp|private|pvt|company|management|logistics|garments?|lines|industries|enterprises|trust)\b"
+
+    def _rp_note(self):
+        """The related party note's transaction table: [(name, nature, relationship, amount in rupees)]."""
+        out = []
+        for fname, sheet, visible, rows in self.sheets:
+            if not visible:
+                continue
+            for i, r in enumerate(rows):
+                cells = [_txt(v).lower() for v in r]
+                if not (any(re.search(r"name of (the )?related part", c) for c in cells) and any(re.search(r"nature", c) for c in cells)):
+                    continue
+                ni = next(j for j, c in enumerate(cells) if re.search(r"name of", c))
+                ti = next((j for j, c in enumerate(cells) if re.search(r"nature of (contract|transaction)", c)), None)
+                ri = next((j for j, c in enumerate(cells) if re.search(r"relation", c)), None)
+                for r2 in rows[i + 1:]:
+                    c2 = [_txt(v) for v in r2]
+                    if any(re.match(r"^\s*note\b", c, re.I) for c in c2 if c):
+                        break
+                    nums = [v for v in r2 if _isnum(v)]
+                    name = c2[ni] if ni < len(c2) else ""
+                    if not name or not nums or re.fullmatch(r"total", name, re.I):
+                        continue
+                    nature = c2[ti] if ti is not None and ti < len(c2) else ""
+                    rel = c2[ri] if ri is not None and ri < len(c2) else ""
+                    out.append((_clean_name(name), nature, rel, self._rs(_num(nums[-1]), self.scale)))
+                if out:
+                    return out
+        return out
 
     def related_parties(self):
-        sheet = self._rp_sheet()
         people = self._rp_people()
         entities = self._rp_entities()
         parties: dict[str, dict] = {}
@@ -1225,50 +1437,85 @@ class Tables:
 
         def party(name):
             for k in order:
-                if _same(k, name):
+                if _same(k, name) or _key(k).startswith(_key(name)) or _key(name).startswith(_key(k)):
                     return parties[k]
             order.append(name)
-            parties[name] = {"name": name, "vals": {}, "desc": []}
+            parties[name] = {"name": name, "vals": {}, "desc": [], "rel": ""}
             return parties[name]
 
-        for head, name, amt in sheet:
-            p = party(_clean_name(name))
-            el, desc = next(((e, d) for rx, e, d in self.RP_KINDS if re.search(rx, head, re.I)), ("OtherRelatedPartyTransactionsExpense", head or "Other transactions"))
-            if self.round_unit > 1:  # the related party note is presented in the statements' unit
-                amt = int((Decimal(amt) / self.round_unit).quantize(Decimal(1), rounding=ROUND_HALF_UP)) * self.round_unit
+        lines = [(n, t, rel, amt) for n, t, rel, amt in self._rp_note()]
+        why = "related party note (transactions during the year)"
+        if not lines:  # a working sheet with the payments, if the note has no table
+            why = "related party transactions working and related party note"
+            for head, name, amt in self._rp_sheet():
+                if self.round_unit > 1:
+                    amt = int((Decimal(amt) / self.round_unit).quantize(Decimal(1), rounding=ROUND_HALF_UP)) * self.round_unit
+                lines.append((_clean_name(name), head, "", amt))
+        for name, nature, rel, amt in lines:
+            p = party(name)
+            el, desc = next(((e, d) for rx, e, d in self.RP_KINDS if re.search(rx, nature, re.I)),
+                            ("OtherRelatedPartyTransactionsExpense", nature.strip().capitalize() or "Other transactions"))
             p["vals"][el] = p["vals"].get(el, 0) + amt
-            if desc not in p["desc"]:
-                p["desc"].append(desc if desc != head else head.strip().capitalize())
-        if not parties:
+            label = nature.strip().capitalize() or desc
+            if label not in p["desc"]:
+                p["desc"].append(label)
+            p["rel"] = p["rel"] or rel
+        prev = {}
+        for v in self.prior_rows("DisclosureOfRelationshipAndTransactionsBetweenRelatedPartiesTable").values():
+            nm = next((per.get("CY") for e, per in v.items() if e.endswith("_NameOfRelatedParty")), None)
+            if nm:
+                prev[nm] = v
+        if not parties and not prev:
             return
-        why = "related party transactions working and related party note"
+        T = "DisclosureOfRelationshipAndTransactionsBetweenRelatedPartiesTable"
         n = 0
+        used_prev = set()
         for k in order:
             p = parties[k]
             n += 1
-            is_person = any(_same(x, p["name"]) for x in people) or not re.search(r"(limited|ltd|llp|private|pvt|company|management|logistics|garment|lines)\b", p["name"], re.I)
-            nm = next((x for x in people + entities if _same(x, p["name"])), p["name"])
+            company = re.search(self.COMPANY_RX, p["name"], re.I)
+            is_person = not company and (re.search(r"kmp|key|director|relative", p["rel"], re.I) or any(_same(x, p["name"]) for x in people) or not p["rel"])
+            nm = next((x for x in people + entities if _same(x, p["name"]) or _key(x).startswith(_key(p["name"]))), p["name"])
             full = self._full_name(nm) if is_person else nm
             dims = {"CategoriesOfRelatedPartiesAxis": f"Column {n}"}
-            vals = {"NameOfRelatedParty": {"CY": full.upper() if is_person else full.upper()},
+            vals = {"NameOfRelatedParty": {"CY": full.upper()},
                     "CountryOfIncorporationOrResidenceOfRelatedParty": {"CY": "INDIA"},
                     "DescriptionOfNatureOfRelatedPartyRelationship": {"CY": "Key Management Personnel" if is_person else "Others"},
-                    "DescriptionOfNatureOfTransactionsWithRelatedParty": {"CY": ", ".join(p["desc"])[:200]}}
+                    "DescriptionOfNatureOfTransactionsWithRelatedParty": {"CY": ", ".join(p["desc"])[:200]},
+                    "AmountWrittenOffDuringPeriodInRespectOfDebtsDueFromRelatedParties": {"CY": 0},
+                    "AmountWrittenBackDuringPeriodInRespectOfDebtsDueToRelatedParties": {"CY": 0}}
             for el, v in p["vals"].items():
                 vals[el] = {"CY": v}
-            pan = self.pan_of(full) if is_person else ""
+            pv = next((v for nm2, v in prev.items() if _same(nm2, full) or _key(nm2).startswith(_key(full)[:12])), None)
+            if pv is not None:
+                used_prev.add(id(pv))
+                for eid, per in pv.items():
+                    if per.get("CY") not in (None, ""):
+                        vals.setdefault(eid.split("_", 1)[1], {}).setdefault("PY", per["CY"])
+                        if eid.endswith(("_PermanentAccountNumberOfRelatedParty", "_CINOfRelatedParty")):
+                            vals[eid.split("_", 1)[1]].setdefault("CY", per["CY"])
+            pan = vals.get("PermanentAccountNumberOfRelatedParty", {}).get("CY") or (self.pan_of(full) if is_person else "")
             if pan:
-                vals["PermanentAccountNumberOfRelatedParty"] = {"CY": pan}
-            self.put_row("DisclosureOfRelationshipAndTransactionsBetweenRelatedPartiesTable", dims, vals, why)
-            if not pan:
-                self.ask("DisclosureOfRelationshipAndTransactionsBetweenRelatedPartiesTable", dims,
-                         "PermanentAccountNumberOfRelatedParty" if is_person else "CINOfRelatedParty",
-                         f"{'PAN' if is_person else 'CIN (or PAN)'} of related party {full.upper()}")
+                vals.setdefault("PermanentAccountNumberOfRelatedParty", {})["CY"] = pan
+            self.put_row(T, dims, vals, why)
+            if not pan and not vals.get("CINOfRelatedParty", {}).get("CY"):
+                corp = re.search(r"(limited|ltd|pvt|private|llp)\b", full, re.I)
+                self.ask(T, dims, "CINOfRelatedParty" if corp else "PermanentAccountNumberOfRelatedParty",
+                         f"{'CIN' if corp else 'PAN'} of related party {full.upper()}"
+                         + ("" if is_person or corp else " (a proprietorship or firm: give the PAN)"))
+        # parties only in last year's filing: their previous-year transactions
+        for nm2, pv in prev.items():
+            if id(pv) in used_prev:
+                continue
+            n += 1
+            vals = {eid.split("_", 1)[1]: {"PY": per["CY"]} for eid, per in pv.items() if per.get("CY") not in (None, "")}
+            self.put_row(T, {"CategoriesOfRelatedPartiesAxis": f"Column {n}"}, vals, "last year's filing (previous-year related party transactions)")
         for pk in ("CY", "PY"):
             eid = G + "WhetherThereAreAnyRelatedPartyTransactionsDuringYear"
             if self.schema.element(eid) and self.f.get_value(eid, pk) in (None, ""):
                 self.f.set_value(eid, pk, "true")
-        self.notes.append(f"Related party table: {n} parties with their transactions for the year.")
+        self.notes.append(f"Related party table: {n} parties with their transactions for the year"
+                          + (" and last year (from last year's filing)." if prev else "."))
 
     # ------------------------------------------------------------ CSR
     def csr_net_profits(self):
@@ -1308,15 +1555,26 @@ class Tables:
         eid = C + "AverageNetProfitForLastThreeFinancialYears"
         if not self.schema.element(eid):
             eid = G + "AverageNetProfitForLastThreeFinancialYears"
-        if self.schema.element(eid) and self.f.get_value(eid, "CY") in (None, "", "0") and len(ordered) == 3:
-            avg = avg_row if avg_row else (Decimal(sum(rows_198[y] for y in ordered)) / 3).quantize(Decimal(1), rounding=ROUND_HALF_UP)
-            self.f.set_value(eid, "CY", str(avg))
+        if self.schema.element(eid) and len(ordered) == 3:
+            # MCA checks the average against the three years in the table and 2% of it against the prescribed amount
+            avg = (Decimal(sum(rows_198[y] for y in ordered)) / 3).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+            self.f.set_value(eid, "CY", str(avg.normalize() if avg == avg.to_integral() else avg))
             self.src[(eid, "CY")] = "average of the net profits u/s 198 for the last three years (CSR working)"
+            pid = eid.split("_", 1)[0] + "_PrescribedCSRExpenditure"
+            if self.schema.element(pid):
+                two = (avg * Decimal("0.02")).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+                old = self.f.get_value(pid, "CY")
+                self.f.set_value(pid, "CY", str(two.normalize() if two == two.to_integral() else two))
+                self.src[(pid, "CY")] = "2% of the average net profit (section 135(5))"
+                if old not in (None, "") and Decimal(str(old)) != two:
+                    self.notes.append(f"Prescribed CSR expenditure set to {two} (2% of the average net profit {avg}); the CSR note "
+                                      f"says {old}, which stays as the amount to be spent.")
         self.notes.append("Net profits for the last three years (CSR) taken from the CSR working: " + ", ".join(ordered) + ".")
 
     def csr_spending(self):
         bodies = self.d.html.get("csr", []) + self.d.html.get("annexure", []) + self.d.html.get("directors", [])
         n = 0
+        agencies: list[str] = []
         for body in bodies:
             for tbl in html_tables(body):
                 if len(tbl) < 2:
@@ -1351,9 +1609,18 @@ class Tables:
                             "NameOfDistrictWhereProjectsOrProgramsWasUndertaken": {"CY": g("district").title()},
                             "BudgetAmountOutlayProjectOrProgramWise": {"CY": _amt(g("alloc"), self.scale) if g("alloc") and _isnum(g("alloc")) else spent},
                             "DirectExpenditureOnProjectsOrPrograms": {"CY": spent}, "AmountSpentOnProjectsOrPrograms": {"CY": spent},
+                            "OverheadsOnProjectsOrPrograms": {"CY": 0}, "ExpenditureOnAdministrativeOverheads": {"CY": 0},
+                            "CumulativeExpenditureUptoReportingPeriod": {"CY": spent},
                             "ModeOfAmountSpent": {"CY": "Direct" if direct else "Other implementing agencies"}}
                     self.put_row("ClassificationOfCSRSpendingTable", {"ClassificationOfCSRSpendingAxis": f"Column {n}"}, vals,
                                  "CSR annual report: details of amount spent")
+                    if not direct:
+                        # the agency's name and CSR registration number follow the 'Direct' column
+                        rest = [c.strip() for c in r[(ci["direct"] or 0) + 1:] if c and c.strip()]
+                        reg = next((c for c in rest if re.fullmatch(r"CSR\d{6,}", c.replace(" ", ""), re.I)), "")
+                        name = next((c for c in rest if re.search(r"[A-Za-z]{3,}", c) and c != reg), "")
+                        if name or reg:
+                            agencies.append(f"Name: {name}" + (f", CSR Reg. No: {reg}" if reg else ""))
             if n:
                 break
         if n:
@@ -1368,6 +1635,10 @@ class Tables:
                     self.src[(eid, "CY")] = "CSR projects in the local area (CSR annual report)"
                     break
             self.notes.append(f"CSR spending table: {n} project(s) from the CSR annual report.")
+            eid = G + "DetailsOfImplementingAgency"
+            if agencies and self.schema.element(eid) and self.f.get_value(eid, "CY") in (None, ""):
+                self.f.set_value(eid, "CY", "; ".join(dict.fromkeys(agencies))[:1000])
+                self.src[(eid, "CY")] = "CSR annual report: implementing agency"
 
     @staticmethod
     def _csr_sector(t: str) -> str:
@@ -1506,6 +1777,21 @@ class Tables:
                 import html as _h
                 txt = "<p>" + _h.escape(txt) + "</p>"
             rows[member][local] = {"CY": txt[:4000]}
+        # MCA always wants the managerial remuneration remark (section 197(16)); CARO 2020 has no clause for it
+        mr = "DisclosureInAuditorsReportRelatingToManagerialRemuneration"
+        if not any(mr in v for v in rows.values()):
+            said = ""
+            for _f, _s, _r in self.all_rows():
+                t = " ".join(_txt(v) for v in _r if _txt(v))
+                if re.search(r"managerial remuneration|remuneration paid .{0,80}directors", t, re.I) and re.search(r"197", t):
+                    said = re.sub(r"^\(?\s*[ivx]+\s*\)\s*", "", re.sub(r"\s+", " ", t)).strip()
+                    break
+            if not said:
+                private = "PTC" in (self.f.cin or "").upper() or re.search(r"private limited", self.f.company or "", re.I)
+                said = ("The company is a private company, so the provisions of section 197 of the Companies Act, 2013 on managerial "
+                        "remuneration do not apply." if private else
+                        "In our opinion the managerial remuneration has been paid or provided in accordance with section 197 of the Act.")
+            rows["AuditorsFavourableRemarkMember"][mr] = {"CY": said[:4000]}
         for member, vals in rows.items():
             if vals:
                 self.put_row("DisclosureOfAuditorsQualificationsReservationsOrAdverseRemarksInAuditorsReportTable",
@@ -1515,6 +1801,30 @@ class Tables:
             n = sum(len(v) for v in rows.values())
             self.notes.append(f"CARO remarks table: {n} clauses from the auditors' report annexure "
                               f"({len(rows['ClauseNotApplicableMember'])} marked not applicable).")
+
+
+NUMERIC = ("monetaryItemType", "sharesItemType", "perShareItemType", "decimalItemType")
+
+
+def py_zero_counterparts(f: Filing, schema, src: dict | None = None) -> int:
+    """MCA: an amount given for the current year needs the previous year too. A zero this year with nothing
+    for last year is zero last year as well (dividends, amortisation, remittances ...)."""
+    n = 0
+    for eid, per in list(f.values.items()):
+        el = schema.element(eid) or {}
+        if el.get("section") is None or el.get("noPY") or el.get("type") not in NUMERIC:
+            continue
+        if per.get("PY") in (None, "") and per.get("CY") not in (None, ""):
+            try:
+                zero = Decimal(str(per["CY"])) == 0
+            except Exception:  # noqa: BLE001
+                continue
+            if zero:
+                f.set_value(eid, "PY", "0")
+                if src is not None:
+                    src[(eid, "PY")] = "zero this year and nothing for last year in the documents"
+                n += 1
+    return n
 
 
 def apply_table_answers(f: Filing, schema, values: dict) -> int:
