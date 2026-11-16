@@ -169,3 +169,117 @@ def reconcile_rounding(filing, schema, per_component=Decimal("1"), scale: int = 
             notes.append(f"'{schema.element(moved[-1])['label']}' ({pk}) adjusted by {fmt_number(y - x)} so total assets "
                          "equal total equity and liabilities (rounding in the statements).")
     return notes
+
+
+ROUNDING_UNITS = {"Thousands": 1000, "Lakhs": 100000, "Millions": 1000000, "Crores": 10000000, "Billions": 1000000000}
+_NOT_ROUNDED = ("ShareCapital", "ValueOfShares", "SharesBoughtBack", "ReductionInCapital", "CSR",
+                "CorporateSocialResponsibility")
+
+
+def is_rounded(eid: str, schema) -> bool:
+    """Amounts TaxPrint rounds to the statements' level: the financial statement and note
+    amounts (including the revenue split of the company-law part). Share capital and CSR
+    amounts stay to the rupee."""
+    el = schema.element(eid)
+    if not el or el.get("type") != "monetaryItemType":
+        return False
+    if not eid.startswith(("in-gaap_", "ind-as_", "in-ca_")):
+        return False
+    if eid.endswith("_CSRExpenditure"):
+        return True  # the profit and loss line, unlike the CSR disclosure amounts
+    return not any(w in eid for w in _NOT_ROUNDED)
+
+
+def round_amount(v, unit: int) -> Decimal:
+    from decimal import ROUND_HALF_UP
+    d = _num(v)
+    return (d / unit).quantize(Decimal(1), rounding=ROUND_HALF_UP) * unit
+
+
+def round_to_unit(filing, schema, unit: int) -> list[str]:
+    """Round amounts to the level the financial statements are presented in (e.g. whole
+    lakhs), the way TaxPrint does, and keep every total equal to its components: line items
+    are rounded, and a total that added up before rounding is re-added from the rounded lines."""
+    from .generator import fmt_number
+    if not unit or unit <= 1:
+        return []
+    exact = fill_totals(filing, schema)  # blank sub-totals too, so each total sees all its lines
+    rel = relationships(schema)
+    done: dict = {}
+    changed = 0
+
+    def ex(eid, pk):
+        return _num(exact.get(eid, {}).get(pk))
+
+    def value(eid, pk, stack=()):
+        if (eid, pk) in done:
+            return done[(eid, pk)]
+        v = ex(eid, pk)
+        out = v
+        kids = rel.get(eid) if eid not in stack else None
+        if kids:
+            parts = [(c, w, ex(c, pk)) for c, w in kids]
+            present = [(c, w, x) for c, w, x in parts if x is not None]
+            if present and v is not None:
+                exact_sum = sum((x * Decimal(str(w)) for _c, w, x in present), Decimal(0))
+                if abs(exact_sum - v) <= max(1, len(present)):
+                    out = sum((value(c, pk, stack + (eid,)) * Decimal(str(w)) for c, w, _x in present), Decimal(0))
+                    done[(eid, pk)] = out
+                    return out
+        if v is not None and is_rounded(eid, schema):
+            out = round_amount(v, unit)
+        done[(eid, pk)] = out
+        return out
+
+    for eid, per in list(filing.values.items()):
+        for pk, raw in list(per.items()):
+            v = _num(raw)
+            if v is None:
+                continue
+            new = value(eid, pk)
+            if new is not None and new != v:
+                filing.set_value(eid, pk, fmt_number(new))
+                changed += 1
+    changed += _balance_after_rounding(filing, schema, rel)
+    unit_name = {v: k for k, v in ROUNDING_UNITS.items()}.get(unit, f"{unit:,}")
+    return [f"{changed} amounts rounded to whole {unit_name.lower()} as in the financial statements; "
+            "totals re-added from the rounded lines."] if changed else []
+
+
+# where TaxPrint puts the difference left by amounts that are not rounded (share capital)
+BALANCING_LINES = ("OtherCurrentLiabilitiesOthers", "OtherCurrentLiabilities", "OtherLongTermLiabilitiesOthers")
+
+
+def _balance_after_rounding(filing, schema, rel) -> int:
+    """Rounded assets and rounded equity and liabilities can differ by the part of share
+    capital that is not rounded; move that difference into 'other current liabilities -
+    others' (and the totals above it), as TaxPrint does."""
+    from .generator import fmt_number
+    pre = "in-gaap_" if filing.taxonomy == "AS" else "ind-as_"
+    parents: dict = {}
+    for tot, kids in rel.items():
+        for c, w in kids:
+            parents.setdefault(c, []).append((tot, w))
+    n = 0
+    for pk in ("CY", "PY"):
+        vals = fill_totals(filing, schema)
+        a = _num(vals.get(pre + "Assets", {}).get(pk))
+        l_ = _num(vals.get(pre + "EquityAndLiabilities", {}).get(pk))
+        if a is None or l_ is None or a == l_:
+            continue
+        plug = next((pre + x for x in BALANCING_LINES if _num(filing.values.get(pre + x, {}).get(pk)) is not None), None)
+        if not plug:
+            continue
+        d = a - l_
+
+        def bump(eid, amt, seen=()):
+            nonlocal n
+            cur = _num(filing.values.get(eid, {}).get(pk))
+            if cur is not None:
+                filing.set_value(eid, pk, fmt_number(cur + amt))
+                n += 1
+            for p, w in parents.get(eid, []):
+                if p not in seen and p.startswith(pre) and p != pre + "Assets":
+                    bump(p, amt * Decimal(str(w)), seen + (eid,))
+        bump(plug, d)
+    return n

@@ -172,8 +172,11 @@ def _classify(caption: str, classes, default: str) -> str:
 
 
 class Tables:
-    def __init__(self, f: Filing, schema, docs, sources: dict | None = None):
+    def __init__(self, f: Filing, schema, docs, sources: dict | None = None, round_unit: int = 1):
         self.f, self.schema, self.d = f, schema, docs
+        # amounts read from the notes are rounded to this many rupees (100000 = whole lakhs),
+        # the level the statements are presented in, so the tables match the rounded face
+        self.round_unit = max(1, int(round_unit or 1))
         self.src = sources if sources is not None else {}
         self.notes: list[str] = []
         self.missing: list[dict] = []
@@ -182,6 +185,11 @@ class Tables:
         self._pan = None
 
     # ------------------------------------------------------------ plumbing
+    def _rs(self, x, scale) -> int:
+        """An amount from the notes (in the note's scale) in rupees, rounded to round_unit."""
+        u = self.round_unit if scale > 1 else 1
+        return int((x * Decimal(scale) / u).quantize(Decimal(1), rounding=ROUND_HALF_UP)) * u
+
     def run(self) -> list[str]:
         for rule in (self.fixed_assets, self.share_capital, self.shareholders, self.reserves, self.provisions,
                      self.receivables, self.loans, self.borrowings, self.investments, self.signatories,
@@ -305,8 +313,8 @@ class Tables:
         for cap, nums in rows:
             if not cap or len(nums) < 1 or re.match(r"^\s*(total|grand total|sub[- ]?total)\b", cap, re.I):
                 continue
-            cy = int((nums[0] * scale).quantize(Decimal(1), rounding=ROUND_HALF_UP))
-            py = int((nums[1] * scale).quantize(Decimal(1), rounding=ROUND_HALF_UP)) if len(nums) > 1 else 0
+            cy = self._rs(nums[0], scale)
+            py = self._rs(nums[1], scale) if len(nums) > 1 else 0
             out.append((cap, cy, py))
         return out
 
@@ -393,9 +401,12 @@ class Tables:
             if len(g) < 3 or len(dp) < 3 or not any(g + dp):
                 continue
             s = self.scale
-            q = lambda x: int((x * s).quantize(Decimal(1), rounding=ROUND_HALF_UP))  # noqa: E731
+            q = lambda x: self._rs(x, s)  # noqa: E731
             go, ga, gc, gd = q(g[0]), q(g[1]), q(g[-1]), q(sum(g[2:-1], Decimal(0)))
             do, dy, dc, dd = q(dp[0]), q(dp[1]), q(dp[-1]), q(sum(dp[2:-1], Decimal(0)))
+            if self.round_unit > 1:
+                # rounded one by one, the closing balance can be a unit off opening + movements
+                gc, dc = go + ga - gd, do + dy - dd
             if part == "tangible":
                 m = _classify(cap, TANGIBLE_CLASSES, "OtherTangibleAssetsMember")
             else:
@@ -632,7 +643,7 @@ class Tables:
         rows, scale = self.note(r"reserves?\s*(and|&)\s*surplus")
         if not rows or not (self.face("ReservesAndSurplus", "CY") or self.face("ReservesAndSurplus", "PY")):
             return
-        q = lambda x: int((x * scale).quantize(Decimal(1), rounding=ROUND_HALF_UP))  # noqa: E731
+        q = lambda x: self._rs(x, scale)  # noqa: E731
         comps = []
         cur = None
         for cap, nums in rows:
@@ -781,8 +792,8 @@ class Tables:
                 if not nums:
                     continue
             if on and nums and c.strip() and not re.match(r"^\s*total", c):
-                over[0] += int((nums[0] * scale).quantize(Decimal(1), rounding=ROUND_HALF_UP))
-                over[1] += int((nums[1] * scale).quantize(Decimal(1), rounding=ROUND_HALF_UP)) if len(nums) > 1 else 0
+                over[0] += self._rs(nums[0], scale)
+                over[1] += self._rs(nums[1], scale) if len(nums) > 1 else 0
         eid = G + "AggregateAmountOfTradeReceivablesOutstandingForPeriodExceedingSixMonths"
         if seen and self.schema.element(eid):
             for pk, v in zip(("CY", "PY"), over):
@@ -882,8 +893,8 @@ class Tables:
                 k = (_classify(cap, self.BORROWING_CLASSES, "OtherLoansAndAdvancesOthersMember"),
                      "SecuredBorrowingsMember" if sec else "UnsecuredBorrowingsMember")
                 p = parts.setdefault(k, [0, 0, ""])
-                p[0] += int((nums[0] * scale).quantize(Decimal(1), rounding=ROUND_HALF_UP))
-                p[1] += int((nums[1] * scale).quantize(Decimal(1), rounding=ROUND_HALF_UP)) if len(nums) > 1 else 0
+                p[0] += self._rs(nums[0], scale)
+                p[1] += self._rs(nums[1], scale) if len(nums) > 1 else 0
                 m = re.search(r"\(([^)]*secur[^)]*)\)", cap, re.I)
                 if sec:
                     p[2] = p[2] or ("Secured - " + (m.group(1) if m else re.sub(r"\s*\(.*", "", cap)))[:200]
@@ -936,8 +947,8 @@ class Tables:
                 continue
             if not cap or not nums or re.match(r"^\s*(total|less)", cap, re.I):
                 continue
-            a = int((nums[0] * scale).quantize(Decimal(1), rounding=ROUND_HALF_UP))
-            b = int((nums[1] * scale).quantize(Decimal(1), rounding=ROUND_HALF_UP)) if len(nums) > 1 else 0
+            a = self._rs(nums[0], scale)
+            b = self._rs(nums[1], scale) if len(nums) > 1 else 0
             if re.search(r"\b(fund|scheme|series)\b", c):
                 k = "Investments in mutual funds"
             elif re.search(r"private limited|pvt|limited|ltd", c):
@@ -1223,6 +1234,8 @@ class Tables:
         for head, name, amt in sheet:
             p = party(_clean_name(name))
             el, desc = next(((e, d) for rx, e, d in self.RP_KINDS if re.search(rx, head, re.I)), ("OtherRelatedPartyTransactionsExpense", head or "Other transactions"))
+            if self.round_unit > 1:  # the related party note is presented in the statements' unit
+                amt = int((Decimal(amt) / self.round_unit).quantize(Decimal(1), rounding=ROUND_HALF_UP)) * self.round_unit
             p["vals"][el] = p["vals"].get(el, 0) + amt
             if desc not in p["desc"]:
                 p["desc"].append(desc if desc != head else head.strip().capitalize())

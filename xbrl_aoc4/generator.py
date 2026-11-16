@@ -33,6 +33,11 @@ UNIT_XML = {
     "Pure": '<unit id="Pure">\n<measure>xbrli:pure</measure>\n</unit>',
     "Shares": '<unit id="Shares">\n<measure>xbrli:shares</measure>\n</unit>',
 }
+# TaxPrint writes the CSR working amounts with decimals="2"
+DECIMALS_2 = {"AverageNetProfitForLastThreeFinancialYears", "PrescribedCSRExpenditure",
+              "NetProfitComputedUnderSection198AndAdjustedAsPerRule21FOfCompaniesCSRPolicyRules2014"}
+SPAN = "<span />"  # TaxPrint starts every text block with an empty span
+LINK_NS_FN = ('<link:footnoteLink xlink:role="http://www.xbrl.org/2003/role/link" xlink:type="extended">')
 TRUE_WORDS = {"true", "yes", "y", "1"}
 FALSE_WORDS = {"false", "no", "n", "0"}
 
@@ -139,7 +144,10 @@ class Generator:
         self.ctx_xml: list[str] = []
         self.dim_ctx_xml: list[str] = []
         self.units: set[str] = set()
-        self.facts: list[str] = []
+        self.facts: list[str] = []      # non-dimensional facts (Elem_n)
+        self.li_facts: list[str] = []   # table facts (LI_n), written in a second block as TaxPrint does
+        self.fact_ids: dict = {}        # (eid, pk, dims) -> fact id, for footnotes
+        self.footnotes: list[tuple[str, str]] = []
         self.tbl_n = 0
         self.emitted: set = set()
         self.warnings: list[str] = []
@@ -227,15 +235,22 @@ class Generator:
         if (eid, cid) in self.emitted:
             return  # an element/context pair may only be reported once
         self.emitted.add((eid, cid))
-        n = len(self.facts) + 1
+        out = self.li_facts if dims else self.facts
+        prefix = "LI" if dims else "Elem"
+        fid = f"{prefix}_{len(out) + 1}"
+        self.fact_ids[(eid, pk, tuple(sorted((dims or {}).items())))] = fid
         q = _qname(eid)
         if is_numeric(el):
             u = unit_for(el)
             self.units.add(u)
-            dec = self.f.decimals or "INF"
-            self.facts.append(f'<{q}  id="{prefix}_{n}"   contextRef="{cid}"    decimals="{dec}"   unitRef="{u}">{txt}</{q}>')
+            dec = (getattr(self.f, "fact_decimals", {}) or {}).get(eid) or (
+                "2" if eid.split("_", 1)[-1] in DECIMALS_2 else (self.f.decimals or "INF"))
+            out.append(f'<{q}  id="{fid}"   contextRef="{cid}"    decimals="{dec}"   unitRef="{u}">{txt}</{q}>')
         else:
-            self.facts.append(f'<{q}  id="{prefix}_{n}"   contextRef="{cid}">{escape(txt)}</{q}>')
+            if el.get("type") == "textBlockItemType" and not txt.startswith(SPAN):
+                txt = SPAN + txt
+            out.append(f'<{q}  id="{fid}"   contextRef="{cid}">{escape(txt)}</{q}>')
+        return fid
 
     # ---------------------------------------------------------- build
     def ordered_value_ids(self, values):
@@ -254,6 +269,7 @@ class Generator:
     def build(self) -> str:
         f = self.f
         values = fill_totals(f, self.schema)
+        self.base_contexts()
         for eid in self.ordered_value_ids(values):
             for pk in ("CY", "PY", "OPEN"):
                 v = values.get(eid, {}).get(pk)
@@ -278,7 +294,48 @@ class Generator:
                         v = vals.get(pk)
                         if v not in (None, ""):
                             self.fact(eid, pk, v, dims or None, table, prefix="LI" if dims else "Elem")
+                for eid, per in (row.get("footnotes") or {}).items():
+                    for pk, text in per.items():
+                        self.footnote(eid, pk, text, dims)
+        for eid, per in (getattr(f, "footnotes", {}) or {}).items():
+            for pk, text in per.items():
+                self.footnote(eid, pk, text, None)
         return self.render()
+
+    def base_contexts(self):
+        """The five plain contexts, always and in TaxPrint's order: end of year, year,
+        end of previous year, previous year, opening."""
+        f = self.f
+        for p in (("I", f.fy_start, f.fy_end, f.fy_end), ("D", f.fy_start, f.fy_end, None),
+                  ("I", f.py_start, f.py_end, f.py_end), ("D", f.py_start, f.py_end, None),
+                  ("O", "", "", f.open_date)):
+            if not p[2] and not p[3]:
+                continue
+            key = (p, ())
+            if key in self.contexts:
+                continue
+            cid = self._base_id(p)
+            ent = f'<entity>\n<identifier scheme="{CIN_SCHEME}">{escape(self.f.cin)}</identifier>\n</entity>'
+            self.ctx_xml.append(f'<context id="{cid}"  >\n{ent}\n{self._period_xml(p)}\n</context>')
+            self.contexts[key] = cid
+
+    def footnote(self, eid: str, pk: str, text, dims):
+        fid = self.fact_ids.get((eid, pk, tuple(sorted((dims or {}).items()))))
+        if fid and str(text or "").strip():
+            self.footnotes.append((fid, str(text).strip()))
+
+    def footnote_xml(self) -> str:
+        if not self.footnotes:
+            return ""
+        out = [LINK_NS_FN]
+        for i, (fid, text) in enumerate(self.footnotes):
+            out.append(f'<link:loc xlink:href="#{fid}" xlink:type="locator" xlink:label="LOC_{i}"/>')
+            out.append(f'<link:footnote xlink:role="http://www.xbrl.org/2003/role/footnote" xml:lang="en" '
+                       f'xlink:type="resource" xlink:label="FN_{i}">{escape(text)}</link:footnote>')
+            out.append(f'<link:footnoteArc xlink:type="arc" order="1" xlink:to="FN_{i}" xlink:from="LOC_{i}" '
+                       f'xlink:arcrole="http://www.xbrl.org/2003/arcrole/fact-footnote"/>')
+        out.append("</link:footnoteLink>")
+        return "\n".join(out)
 
     def namespaces(self) -> dict:
         tax = dict(TAXONOMIES[self.f.taxonomy]["namespaces"])
@@ -287,7 +344,7 @@ class Generator:
 
     def used_prefixes(self) -> set:
         out = set()
-        for line in self.facts + self.dim_ctx_xml:
+        for line in self.facts + self.li_facts + self.dim_ctx_xml:
             out.update(re.findall(r"<([a-z][a-z\-]*):", line))
             out.update(re.findall(r'dimension="([a-z][a-z\-]*):', line))
             out.update(re.findall(r">([a-z][a-z\-]*):[A-Z]", line))
@@ -319,14 +376,21 @@ class Generator:
             "\n".join(self.ctx_xml),
             "<!--Context End -->\n\n\n",
             "<!--Dimension Context Begin -->",
-            "\n".join(self.dim_ctx_xml),
-            "<!--Dimension Context End -->\n",
+            "\n".join(self.dim_ctx_xml) + "\n",
             "<!--Unit Begin -->",
             "\n".join(units),
-            "<!--Unit End -->\n",
+            "<!--Unit End -->\n\n",
             "<!--Details Begin -->",
             "\n".join(self.facts),
-            "<!--Details End -->",
+            "<!--Details End -->\n",
+            "<!--Tuple Begin -->\n",
+            "<!--Tuple End -->\n\n",
+            "<!--Details Begin -->",
+            "\n".join(self.li_facts),
+            "<!--Details End -->\n\n",
+            "<!--Footnotes Begin -->",
+            self.footnote_xml(),
+            "<!--Footnotes End -->\n\n",
             "</xbrl>",
             "",
         ]

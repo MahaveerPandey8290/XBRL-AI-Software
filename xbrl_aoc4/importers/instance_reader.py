@@ -108,6 +108,7 @@ def read_instance(path_or_bytes, taxonomy: str | None = None) -> tuple[Filing, l
         return None
 
     unknown = set()
+    by_id: dict = {}
     for el in root:
         if not isinstance(el.tag, str) or el.get("contextRef") is None:
             continue
@@ -116,8 +117,8 @@ def read_instance(path_or_bytes, taxonomy: str | None = None) -> tuple[Filing, l
         if not prefix:
             continue
         eid = f"{prefix}_{local}"
-        if el.get("decimals") and el.get("decimals") != "INF" and f.decimals == "INF":
-            pass
+        if el.get("decimals") and el.get("decimals") != "INF":
+            f.fact_decimals[eid] = el.get("decimals")
         c = ctxs.get(el.get("contextRef"))
         if not c:
             continue
@@ -132,6 +133,8 @@ def read_instance(path_or_bytes, taxonomy: str | None = None) -> tuple[Filing, l
             unknown.add(eid)
         if not c["dims"]:
             f.values.setdefault(eid, {})[pk] = text
+            if el.get("id"):
+                by_id[el.get("id")] = (f.footnotes, eid, pk)
         else:
             tid = schema.find_table(set(c["dims"]), eid) or schema.find_table(set(c["dims"]))
             if not tid:
@@ -139,9 +142,34 @@ def read_instance(path_or_bytes, taxonomy: str | None = None) -> tuple[Filing, l
                 warnings.append(f"{eid}: no template table with axes {sorted(c['dims'])}")
             row = f.table_row(tid, c["dims"])
             row["values"].setdefault(eid, {})[pk] = text
+            if el.get("id"):
+                by_id[el.get("id")] = (row.setdefault("footnotes", {}), eid, pk)
+    _read_footnotes(root, by_id)
+    for rows in f.tables.values():
+        for row in rows:
+            if not row.get("footnotes"):
+                row.pop("footnotes", None)
     if unknown:
         warnings.append(f"{len(unknown)} element(s) not in the {key} template: " + ", ".join(sorted(unknown)[:15]))
     nat = f.values.get(f"in-ca_NatureOfReportStandaloneConsolidated", {}).get("CY")
     if nat:
         f.nature = nat
     return f, warnings
+
+
+def _read_footnotes(root, by_id: dict):
+    """Attach each link:footnote to the fact its locator points at."""
+    X = f"{{{XLINK}}}"
+    for link in root.iter(f"{{{LINK}}}footnoteLink"):
+        locs, notes = {}, {}
+        for el in link:
+            if el.tag == f"{{{LINK}}}loc":
+                locs[el.get(X + "label")] = el.get(X + "href", "").split("#")[-1]
+            elif el.tag == f"{{{LINK}}}footnote":
+                notes[el.get(X + "label")] = "".join(el.itertext()).strip()
+        for el in link:
+            if el.tag == f"{{{LINK}}}footnoteArc":
+                fid, text = locs.get(el.get(X + "from")), notes.get(el.get(X + "to"))
+                if fid in by_id and text:
+                    holder, eid, pk = by_id[fid]
+                    holder.setdefault(eid, {})[pk] = text
