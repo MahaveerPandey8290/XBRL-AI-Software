@@ -162,6 +162,36 @@ def _review(f: Filing, schema, sources: dict) -> list[dict]:
     return out
 
 
+def _footnotes_for_others(f: Filing, schema, mapped: list) -> list[str]:
+    """TaxPrint explains an 'other ...' amount with a footnote naming what it holds; use the
+    workbook captions that were added into it."""
+    from .calc import relationships
+    totals = relationships(schema)
+    caps: dict = {}
+    for m in mapped:
+        eid = (m.get("element") or "").replace("@start", "")
+        local = eid.split("_", 1)[-1]
+        el = schema.element(eid)
+        if not el or el.get("type") != "monetaryItemType" or eid in totals:
+            continue
+        if not (local.startswith(("Other", "Miscellaneous")) or local.endswith("Others")):
+            continue
+        cap = re.sub(r"\s+", " ", re.sub(r"^[\s(]*[a-z0-9ivx]{1,4}[).]\s+", "", str(m.get("caption") or ""), flags=re.I)).strip(" :-")
+        words = lambda t: set(re.findall(r"[a-z]{3,}", t.lower())) - {"other", "others", "the", "and"}  # noqa: E731
+        if cap and words(cap) and not words(cap) <= words(el.get("label", "")) and not re.match(r"^(total|others?)\b", cap, re.I):
+            caps.setdefault(eid, [])
+            if cap.lower() not in (c.lower() for c in caps[eid]):
+                caps[eid].append(cap)
+    n = 0
+    for eid, cs in caps.items():
+        text = "; ".join(cs)[:500]
+        for pk in ("CY", "PY"):
+            if f.get_value(eid, pk) not in (None, "") and not f.footnotes.get(eid, {}).get(pk):
+                f.footnotes.setdefault(eid, {})[pk] = text
+                n += 1
+    return [f"{n} footnotes added to 'other' amounts, naming what they hold."] if n else []
+
+
 def process(files: list, header_json: str) -> str:
     """files: [(name, bytes)]; header: taxonomy, company, cin, fy_start, fy_end, nature, amount_unit,
     values ({element: {period: value}} typed by the user on the page), zero_fill (default true)."""
@@ -321,15 +351,24 @@ def process(files: list, header_json: str) -> str:
         if inf:
             inf.nature_of_others(relationships(schema))
         S.stage(None)
+    unit = 1
+    if mapped and h.get("round_amounts", True) and (scale or 1) > 1:
+        # present the amounts as the statements do (e.g. whole lakhs), like TaxPrint
+        from .calc import round_to_unit
+        unit = scale
+        notes += round_to_unit(f, schema, unit)
+        S.stage("rounded to the level used in the financial statements")
     missing = []
     if fin_files:
         from .tables import Tables, apply_table_answers
-        tb = Tables(f, schema, docs, S.src)
+        tb = Tables(f, schema, docs, S.src, round_unit=unit)
         notes += tb.run()
         S.stage("from the notes to accounts (note tables)")
         apply_table_answers(f, schema, h.get("values") or {})
         answered = {k for k, per in (h.get("values") or {}).items() if any(v not in (None, "") for v in (per or {}).values())}
         missing = [q for q in tb.missing if q["element"] not in answered]
+    if mapped:
+        notes += _footnotes_for_others(f, schema, mapped)
     res = validate(f)
     if h.get("zero_fill", True):
         z = zero_blank_mandatory_amounts(f, schema, res)
