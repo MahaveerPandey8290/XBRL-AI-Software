@@ -396,6 +396,13 @@ def process(files: list, header_json: str) -> str:
             notes += z
             S.stage("required by MCA but not in the documents: set to 0")
             res = validate(f)
+    if h.get("zero_fill_all", True):
+        from .autofill import zero_fill_like_taxprint
+        z = zero_fill_like_taxprint(f, schema)
+        if z:
+            notes += z
+            S.stage("blank in the documents: written as 0, as TaxPrint does")
+            res = validate(f)
     xml, warns = generate(f)
     return json.dumps({
         "taxonomy": f.taxonomy, "company": f.company, "cin": f.cin, "fy_start": f.fy_start, "fy_end": f.fy_end,

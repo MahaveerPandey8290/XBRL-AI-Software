@@ -309,6 +309,23 @@ def test_taxprint_layout_and_footnotes():
     assert g.footnotes == f.footnotes
 
 
+def test_zero_fill_like_taxprint():
+    """Blank amounts TaxPrint writes as 0 get 0 in both years, but never a head count or a total its lines make non-zero."""
+    from xbrl_aoc4.autofill import zero_fill_like_taxprint
+    from xbrl_aoc4.schema_loader import load_schema
+    schema = load_schema("AS")
+    f = Filing(taxonomy="AS", fy_start="2025-04-01", fy_end="2026-03-31", cin="U74899DL1993PTC051877")
+    f.ensure_periods()
+    f.set_value("in-gaap_TradeReceivables", "CY", "5000")
+    f.table_row("in-gaap_StatementOfChangesInReservesTable", {"in-gaap_ComponentsOfReservesAxis": "in-gaap_CapitalRedemptionReservesMember"})
+    assert zero_fill_like_taxprint(f, schema)
+    assert f.get_value("in-gaap_CashOnHand", "CY") == "0" and f.get_value("in-gaap_CashOnHand", "PY") == "0"
+    assert f.get_value("in-gaap_TradeReceivables", "CY") == "5000"
+    assert not f.get_value("in-ca_NumberOfEmployeesInTheCompanyAtTheEndOfTheFinancialYear", "CY")
+    row = f.tables["in-gaap_StatementOfChangesInReservesTable"][0]["values"]
+    assert "in-gaap_DividendAppropriation" not in row, "only items TaxPrint puts on that reserve"
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_"):
