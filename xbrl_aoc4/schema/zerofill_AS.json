@@ -1,0 +1,3818 @@
+{
+"tables": {
+"in-ca_DisclosureOfKeyManagerialPersonnelsAndDirectorsAndRemunerationToKeyManagerialPersonnelsAndDirectorsTable": {
+"in-ca_KeyManagerialPersonnelsAndDirectorsAxis=*": {
+"in-ca_CeilingAsPerActKeyManagerialPersonnelOrDirectorRemuneration": [
+"CY"
+],
+"in-ca_CommissionAsPercentageOfProfitKeyManagerialPersonnelOrDirector": [
+"CY"
+],
+"in-ca_GrossSalaryToKeyManagerialPersonnelOrDirector": [
+"CY"
+],
+"in-ca_KeyManagerialPersonnelOrDirectorRemuneration": [
+"CY"
+],
+"in-ca_OtherCommissionKeyManagerialPersonnelOrDirector": [
+"CY"
+],
+"in-ca_OtherCompensationKeyManagerialPersonnelOrDirector": [
+"CY"
+],
+"in-ca_PerquisitesKeyManagerialPersonnelOrDirector": [
+"CY"
+],
+"in-ca_ProfitsInLieuOfSalaryKeyManagerialPersonnelOrDirector": [
+"CY"
+],
+"in-ca_SalaryKeyManagerialPersonnelOrDirector": [
+"CY"
+],
+"in-ca_SharesHeldByKeyManagerialPersonnelOrDirector": [
+"CY"
+],
+"in-ca_SittingFeesKeyManagerialPersonnelOrDirector": [
+"CY"
+],
+"in-ca_StockOptionKeyManagerialPersonnelOrDirector": [
+"CY"
+],
+"in-ca_SweatEquityKeyManagerialPersonnelOrDirector": [
+"CY"
+]
+}
+},
+"in-gaap_ClassificationOfCSRSpendingTable": {
+"in-gaap_ClassificationOfCSRSpendingAxis=*": {
+"in-gaap_CumulativeExpenditureUptoReportingPeriod": [
+"CY"
+],
+"in-gaap_ExpenditureOnAdministrativeOverheads": [
+"CY"
+],
+"in-gaap_OverheadsOnProjectsOrPrograms": [
+"CY"
+]
+}
+},
+"in-gaap_DisclosureOfBreakupOfProvisionsTable": {
+"in-gaap_ClassificationBasedOnTimePeriodAxis=in-gaap_LongTermMember": {
+"in-gaap_CSRExpenditureProvision": [
+"CY",
+"PY"
+],
+"in-gaap_OtherProvisions": [
+"CY",
+"PY"
+],
+"in-gaap_ProvisionEmployeeInsuranceScheme": [
+"CY",
+"PY"
+],
+"in-gaap_ProvisionForAbandonmentCost": [
+"CY",
+"PY"
+],
+"in-gaap_ProvisionForCorporateDividendTax": [
+"CY",
+"PY"
+],
+"in-gaap_ProvisionForCorporateTax": [
+"CY",
+"PY"
+],
+"in-gaap_ProvisionForCurrentTax": [
+"CY",
+"PY"
+],
+"in-gaap_ProvisionForFringeBenefitTax": [
+"CY",
+"PY"
+],
+"in-gaap_ProvisionForOtherTax": [
+"CY",
+"PY"
+],
+"in-gaap_ProvisionForProposedDividend": [
+"CY",
+"PY"
+],
+"in-gaap_ProvisionForProposedEquityDividend": [
+"CY",
+"PY"
+],
+"in-gaap_ProvisionForProposedEquityFinalDividend": [
+"CY",
+"PY"
+],
+"in-gaap_ProvisionForProposedEquityInterimDividend": [
+"CY",
+"PY"
+],
+"in-gaap_ProvisionForProposedEquitySpecialDividend": [
+"CY",
+"PY"
+],
+"in-gaap_ProvisionForProposedPreferenceDividend": [
+"CY",
+"PY"
+],
+"in-gaap_ProvisionForProposedPreferenceFinalDividend": [
+"CY",
+"PY"
+],
+"in-gaap_ProvisionForProposedPreferenceInterimDividend": [
+"CY",
+"PY"
+],
+"in-gaap_ProvisionForProposedPreferenceSpecialDividend": [
+"CY",
+"PY"
+],
+"in-gaap_ProvisionForStatutoryLiabilities": [
+"CY",
+"PY"
+],
+"in-gaap_ProvisionForWealthTax": [
+"CY",
+"PY"
+],
+"in-gaap_ProvisionLeaveEncashment": [
+"CY",
+"PY"
+],
+"in-gaap_ProvisionOtherEmployeeRelatedLiabilities": [
+"CY",
+"PY"
+],
+"in-gaap_ProvisionPension": [
+"CY",
+"PY"
+]
+}
+},
+"in-gaap_DisclosureOfClassesOfShareCapitalTable": {
+"in-gaap_ClassesOfShareCapitalAxis=in-gaap_EquityShares1Member": {
+"in-ca_NumberOfOtherIssueOfSharesArisingOutOfConversionOfSecurities": [
+"CY",
+"PY"
+],
+"in-ca_NumberOfOtherIssuesOfShares": [
+"CY",
+"PY"
+],
+"in-ca_NumberOfSharesAllottedForContractsWithoutPaymentReceivedInCash": [
+"CY",
+"PY"
+],
+"in-ca_NumberOfSharesBoughtBack": [
+"CY"
+],
+"in-ca_NumberOfSharesIssuedAsBonusShares": [
+"CY",
+"PY"
+],
+"in-ca_NumberOfSharesIssuedAsOtherPreferentialAllotment": [
+"CY",
+"PY"
+],
+"in-ca_NumberOfSharesIssuedAsPreferentialAllotmentArisingOutOfConversionOfDebenturesPreferenceSharesDuringPeriod": [
+"CY",
+"PY"
+],
+"in-ca_NumberOfSharesIssuedAsRights": [
+"CY",
+"PY"
+],
+"in-ca_NumberOfSharesIssuedInOtherPrivatePlacement": [
+"CY",
+"PY"
+],
+"in-ca_NumberOfSharesIssuedInPrivatePlacementArisingOutOfConversionOfDebenturesPreferenceSharesDuringPeriod": [
+"CY",
+"PY"
+],
+"in-ca_NumberOfSharesIssuedInPublicOffering": [
+"CY",
+"PY"
+],
+"in-ca_NumberOfSharesIssuedUnderEmployeeStockOptionPlan": [
+"CY",
+"PY"
+],
+"in-ca_NumberOfSharesIssuedUnderSchemeOfAmalgamation": [
+"CY",
+"PY"
+],
+"in-ca_OtherDecreaseInNumberOfShares": [
+"CY",
+"PY"
+],
+"in-gaap_AggregateAmountOfIncreaseInShareCapitalDuringPeriod": [
+"CY",
+"PY"
+],
+"in-gaap_AggregateNumberOfFullyPaidUpSharesIssuedByWayOfBonusSharesDuringLastFiveYears": [
+"CY",
+"PY"
+],
+"in-gaap_AggregateNumberOfFullyPaidUpSharesIssuedPursuantToContractsWithoutPaymentBeingReceivedInCashDuringLastFiveYears": [
+"CY",
+"PY"
+],
+"in-gaap_AggregateNumberOfSharesBoughtBackDuringLastFiveYears": [
+"CY",
+"PY"
+],
+"in-gaap_AggregateNumberOfSharesIssuedDuringPeriod": [
+"CY",
+"PY"
+],
+"in-gaap_AmountOfBonusIssueDuringPeriod": [
+"CY",
+"PY"
+],
+"in-gaap_AmountOfEmployeeStockOptionPlanIssuedDuringPeriod": [
+"CY",
+"PY"
+],
+"in-gaap_AmountOfIssueAllottedForContractsWithoutPaymentReceivedInCashDuringPeriod": [
+"CY",
+"PY"
+],
+"in-gaap_AmountOfIssueUnderSchemeOfAmalgamationDuringPeriod": [
+"CY",
+"PY"
+],
+"in-gaap_AmountOfOtherIssueArisingOutOfConversionOfSecuritiesDuringPeriod": [
+"CY",
+"PY"
+],
+"in-gaap_AmountOfOtherIssuesDuringPeriod": [
+"CY",
+"PY"
+],
+"in-gaap_AmountOfOtherPreferentialAllotmentIssueDuringPeriod": [
+"CY",
+"PY"
+],
+"in-gaap_AmountOfOtherPrivatePlacementIssueDuringPeriod": [
+"CY",
+"PY"
+],
+"in-gaap_AmountOfPreferentialAllotmentIssueArisingOutOfConversionOfDebenturesPreferenceSharesDuringPeriod": [
+"CY",
+"PY"
+],
+"in-gaap_AmountOfPrivatePlacementIssueArisingOutOfConversionOfDebenturesPreferenceSharesDuringPeriod": [
+"CY",
+"PY"
+],
+"in-gaap_AmountOfPublicIssueDuringPeriod": [
+"CY",
+"PY"
+],
+"in-gaap_AmountOfRightsIssueDuringPeriod": [
+"CY",
+"PY"
+],
+"in-gaap_AmountOfSharesReservedForIssueUnderOptionsAndContractsOrCommitmentsForSaleOfSharesOrDisinvestment": [
+"CY",
+"PY"
+],
+"in-gaap_AmountPerShareCalledInCaseSharesNotFullyCalled": [
+"CY",
+"PY"
+],
+"in-gaap_ApplicationMoneyReceivedForAllotmentOfSecuritiesAndDueForRefundAndInterestAccruedThereon": [
+"CY",
+"PY"
+],
+"in-gaap_ApplicationMoneyReceivedForAllotmentOfSecuritiesAndDueForRefundInterestAccrued": [
+"CY",
+"PY"
+],
+"in-gaap_ApplicationMoneyReceivedForAllotmentOfSecuritiesAndDueForRefundPrincipal": [
+"CY",
+"PY"
+],
+"in-gaap_CallsUnpaid": [
+"CY",
+"PY"
+],
+"in-gaap_CallsUnpaidByDirectors": [
+"CY",
+"PY"
+],
+"in-gaap_CallsUnpaidByDirectorsAndOfficers": [
+"CY",
+"PY"
+],
+"in-gaap_CallsUnpaidByOfficers": [
+"CY",
+"PY"
+],
+"in-gaap_CallsUnpaidByOthers": [
+"CY",
+"PY"
+],
+"in-gaap_DecreaseInAmountOfSharesBoughtBack": [
+"CY"
+],
+"in-gaap_DecreaseInNumberOfSharesDuringPeriod": [
+"CY"
+],
+"in-gaap_DecreaseInShareCapitalDuringPeriod": [
+"CY"
+],
+"in-gaap_ForfeitedShares": [
+"CY",
+"PY"
+],
+"in-gaap_ForfeitedSharesReissued": [
+"CY",
+"PY"
+],
+"in-gaap_IncreaseDecreaseInNumberOfSharesOutstanding": [
+"CY"
+],
+"in-gaap_IncreaseDecreaseInShareCapital": [
+"CY"
+],
+"in-gaap_NumberOfSharesOutstanding": [
+"CY",
+"OPEN",
+"PY"
+],
+"in-gaap_NumberOfSharesProposedToBeIssued": [
+"CY",
+"PY"
+],
+"in-gaap_NumberOfSharesSubscribedButNotFullyPaid": [
+"CY",
+"PY"
+],
+"in-gaap_OriginalPaidUpValueOfForfeitedShares": [
+"CY",
+"PY"
+],
+"in-gaap_OtherDecreaseInAmountOfShares": [
+"CY",
+"PY"
+],
+"in-gaap_ShareCapital": [
+"OPEN"
+],
+"in-gaap_SharePremiumForSharesToBeAllotted": [
+"CY",
+"PY"
+],
+"in-gaap_SharesInCompanyHeldByAssociatesOfItsHoldingCompany": [
+"CY",
+"PY"
+],
+"in-gaap_SharesInCompanyHeldByAssociatesOfItsUltimateHoldingCompany": [
+"CY",
+"PY"
+],
+"in-gaap_SharesInCompanyHeldByHoldingCompany": [
+"CY",
+"PY"
+],
+"in-gaap_SharesInCompanyHeldByHoldingCompanyOrUltimateHoldingCompanyOrByItsSubsidiariesOrAssociates": [
+"CY",
+"PY"
+],
+"in-gaap_SharesInCompanyHeldBySubsidiariesOfItsHoldingCompany": [
+"CY",
+"PY"
+],
+"in-gaap_SharesInCompanyHeldBySubsidiariesOfItsUltimateHoldingCompany": [
+"CY",
+"PY"
+],
+"in-gaap_SharesInCompanyHeldByUltimateHoldingCompany": [
+"CY",
+"PY"
+],
+"in-gaap_SharesReservedForIssueUnderOptionsAndContractsOrCommitmentsForSaleOfSharesOrDisinvestment": [
+"CY",
+"PY"
+],
+"in-gaap_ValueOfSharesSubscribedButNotFullyPaid": [
+"CY",
+"PY"
+]
+},
+"in-gaap_ClassesOfShareCapitalAxis=in-gaap_EquitySharesMember": {
+"in-ca_NumberOfOtherIssueOfSharesArisingOutOfConversionOfSecurities": [
+"CY",
+"PY"
+],
+"in-ca_NumberOfOtherIssuesOfShares": [
+"CY",
+"PY"
+],
+"in-ca_NumberOfSharesAllottedForContractsWithoutPaymentReceivedInCash": [
+"CY",
+"PY"
+],
+"in-ca_NumberOfSharesBoughtBack": [
+"CY"
+],
+"in-ca_NumberOfSharesIssuedAsBonusShares": [
+"CY",
+"PY"
+],
+"in-ca_NumberOfSharesIssuedAsOtherPreferentialAllotment": [
+"CY",
+"PY"
+],
+"in-ca_NumberOfSharesIssuedAsPreferentialAllotmentArisingOutOfConversionOfDebenturesPreferenceSharesDuringPeriod": [
+"CY",
+"PY"
+],
+"in-ca_NumberOfSharesIssuedAsRights": [
+"CY",
+"PY"
+],
+"in-ca_NumberOfSharesIssuedInOtherPrivatePlacement": [
+"CY",
+"PY"
+],
+"in-ca_NumberOfSharesIssuedInPrivatePlacementArisingOutOfConversionOfDebenturesPreferenceSharesDuringPeriod": [
+"CY",
+"PY"
+],
+"in-ca_NumberOfSharesIssuedInPublicOffering": [
+"CY",
+"PY"
+],
+"in-ca_NumberOfSharesIssuedUnderEmployeeStockOptionPlan": [
+"CY",
+"PY"
+],
+"in-ca_NumberOfSharesIssuedUnderSchemeOfAmalgamation": [
+"CY",
+"PY"
+],
+"in-ca_OtherDecreaseInNumberOfShares": [
+"CY",
+"PY"
+],
+"in-gaap_AggregateAmountOfIncreaseInShareCapitalDuringPeriod": [
+"CY",
+"PY"
+],
+"in-gaap_AggregateNumberOfFullyPaidUpSharesIssuedByWayOfBonusSharesDuringLastFiveYears": [
+"CY",
+"PY"
+],
+"in-gaap_AggregateNumberOfFullyPaidUpSharesIssuedPursuantToContractsWithoutPaymentBeingReceivedInCashDuringLastFiveYears": [
+"CY",
+"PY"
+],
+"in-gaap_AggregateNumberOfSharesBoughtBackDuringLastFiveYears": [
+"CY",
+"PY"
+],
+"in-gaap_AggregateNumberOfSharesIssuedDuringPeriod": [
+"CY",
+"PY"
+],
+"in-gaap_AmountOfBonusIssueDuringPeriod": [
+"CY",
+"PY"
+],
+"in-gaap_AmountOfEmployeeStockOptionPlanIssuedDuringPeriod": [
+"CY",
+"PY"
+],
+"in-gaap_AmountOfIssueAllottedForContractsWithoutPaymentReceivedInCashDuringPeriod": [
+"CY",
+"PY"
+],
+"in-gaap_AmountOfIssueUnderSchemeOfAmalgamationDuringPeriod": [
+"CY",
+"PY"
+],
+"in-gaap_AmountOfOtherIssueArisingOutOfConversionOfSecuritiesDuringPeriod": [
+"CY",
+"PY"
+],
+"in-gaap_AmountOfOtherIssuesDuringPeriod": [
+"CY",
+"PY"
+],
+"in-gaap_AmountOfOtherPreferentialAllotmentIssueDuringPeriod": [
+"CY",
+"PY"
+],
+"in-gaap_AmountOfOtherPrivatePlacementIssueDuringPeriod": [
+"CY",
+"PY"
+],
+"in-gaap_AmountOfPreferentialAllotmentIssueArisingOutOfConversionOfDebenturesPreferenceSharesDuringPeriod": [
+"CY",
+"PY"
+],
+"in-gaap_AmountOfPrivatePlacementIssueArisingOutOfConversionOfDebenturesPreferenceSharesDuringPeriod": [
+"CY",
+"PY"
+],
+"in-gaap_AmountOfPublicIssueDuringPeriod": [
+"CY",
+"PY"
+],
+"in-gaap_AmountOfRightsIssueDuringPeriod": [
+"CY",
+"PY"
+],
+"in-gaap_AmountOfSharesReservedForIssueUnderOptionsAndContractsOrCommitmentsForSaleOfSharesOrDisinvestment": [
+"CY",
+"PY"
+],
+"in-gaap_ApplicationMoneyReceivedForAllotmentOfSecuritiesAndDueForRefundAndInterestAccruedThereon": [
+"CY",
+"PY"
+],
+"in-gaap_ApplicationMoneyReceivedForAllotmentOfSecuritiesAndDueForRefundInterestAccrued": [
+"CY",
+"PY"
+],
+"in-gaap_ApplicationMoneyReceivedForAllotmentOfSecuritiesAndDueForRefundPrincipal": [
+"CY",
+"PY"
+],
+"in-gaap_CallsUnpaid": [
+"CY",
+"PY"
+],
+"in-gaap_CallsUnpaidByDirectors": [
+"CY",
+"PY"
+],
+"in-gaap_CallsUnpaidByDirectorsAndOfficers": [
+"CY",
+"PY"
+],
+"in-gaap_CallsUnpaidByOfficers": [
+"CY",
+"PY"
+],
+"in-gaap_CallsUnpaidByOthers": [
+"CY",
+"PY"
+],
+"in-gaap_DecreaseInAmountOfSharesBoughtBack": [
+"CY"
+],
+"in-gaap_DecreaseInNumberOfSharesDuringPeriod": [
+"CY"
+],
+"in-gaap_DecreaseInShareCapitalDuringPeriod": [
+"CY"
+],
+"in-gaap_ForfeitedShares": [
+"CY",
+"PY"
+],
+"in-gaap_ForfeitedSharesReissued": [
+"CY",
+"PY"
+],
+"in-gaap_IncreaseDecreaseInNumberOfSharesOutstanding": [
+"CY"
+],
+"in-gaap_IncreaseDecreaseInShareCapital": [
+"CY"
+],
+"in-gaap_NumberOfSharesOutstanding": [
+"CY",
+"OPEN",
+"PY"
+],
+"in-gaap_NumberOfSharesProposedToBeIssued": [
+"CY",
+"PY"
+],
+"in-gaap_NumberOfSharesSubscribedButNotFullyPaid": [
+"CY",
+"PY"
+],
+"in-gaap_OriginalPaidUpValueOfForfeitedShares": [
+"CY",
+"PY"
+],
+"in-gaap_OtherDecreaseInAmountOfShares": [
+"CY",
+"PY"
+],
+"in-gaap_ShareCapital": [
+"OPEN"
+],
+"in-gaap_SharePremiumForSharesToBeAllotted": [
+"CY",
+"PY"
+],
+"in-gaap_SharesInCompanyHeldByAssociatesOfItsHoldingCompany": [
+"CY",
+"PY"
+],
+"in-gaap_SharesInCompanyHeldByAssociatesOfItsUltimateHoldingCompany": [
+"CY",
+"PY"
+],
+"in-gaap_SharesInCompanyHeldByHoldingCompany": [
+"CY",
+"PY"
+],
+"in-gaap_SharesInCompanyHeldByHoldingCompanyOrUltimateHoldingCompanyOrByItsSubsidiariesOrAssociates": [
+"CY",
+"PY"
+],
+"in-gaap_SharesInCompanyHeldBySubsidiariesOfItsHoldingCompany": [
+"CY",
+"PY"
+],
+"in-gaap_SharesInCompanyHeldBySubsidiariesOfItsUltimateHoldingCompany": [
+"CY",
+"PY"
+],
+"in-gaap_SharesInCompanyHeldByUltimateHoldingCompany": [
+"CY",
+"PY"
+],
+"in-gaap_SharesReservedForIssueUnderOptionsAndContractsOrCommitmentsForSaleOfSharesOrDisinvestment": [
+"CY",
+"PY"
+],
+"in-gaap_ValueOfSharesSubscribedButNotFullyPaid": [
+"CY",
+"PY"
+]
+}
+},
+"in-gaap_DisclosureOfIntangibleAssetsTable": {
+"in-gaap_CarryingAmountAccumulatedAmortizationAndImpairmentAndGrossCarryingAmountAxis=in-gaap_AccumulatedAmortizationAndImpairmentMember": {
+"in-gaap_DisposalsIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_DisposalsIntangibleAssetsOthers": [
+"CY",
+"PY"
+],
+"in-gaap_DisposalsIntangibleAssetsThroughDemergers": [
+"CY",
+"PY"
+],
+"in-gaap_ImpairmentLossRecognisedInProfitOrLossIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsIntangibleAssetsOthers": [
+"CY",
+"PY"
+],
+"in-gaap_RetirementsOfIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_ReversalOfImpairmentLossRecognisedInProfitOrLossIntangibleAssets": [
+"CY",
+"PY"
+]
+},
+"in-gaap_CarryingAmountAccumulatedAmortizationAndImpairmentAndGrossCarryingAmountAxis=in-gaap_AccumulatedAmortizationAndImpairmentMember|in-gaap_ClassesOfIntangibleAssetsAxis=*|in-gaap_SubClassesOfIntangibleAssetsAxis=*": {
+"in-gaap_DisposalsIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_DisposalsIntangibleAssetsOthers": [
+"CY",
+"PY"
+],
+"in-gaap_DisposalsIntangibleAssetsThroughDemergers": [
+"CY",
+"PY"
+],
+"in-gaap_ImpairmentLossRecognisedInProfitOrLossIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsIntangibleAssetsOthers": [
+"CY",
+"PY"
+],
+"in-gaap_RetirementsOfIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_ReversalOfImpairmentLossRecognisedInProfitOrLossIntangibleAssets": [
+"CY",
+"PY"
+]
+},
+"in-gaap_CarryingAmountAccumulatedAmortizationAndImpairmentAndGrossCarryingAmountAxis=in-gaap_AccumulatedAmortizationAndImpairmentMember|in-gaap_ClassesOfIntangibleAssetsAxis=in-gaap_ComputerSoftwareMember|in-gaap_SubClassesOfIntangibleAssetsAxis=in-gaap_IntangibleAssetsOtherThanInternallyGeneratedMember": {
+"in-gaap_DisposalsIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_DisposalsIntangibleAssetsOthers": [
+"CY",
+"PY"
+],
+"in-gaap_DisposalsIntangibleAssetsThroughDemergers": [
+"CY",
+"PY"
+],
+"in-gaap_ImpairmentLossRecognisedInProfitOrLossIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsIntangibleAssetsOthers": [
+"CY",
+"PY"
+],
+"in-gaap_RetirementsOfIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_ReversalOfImpairmentLossRecognisedInProfitOrLossIntangibleAssets": [
+"CY",
+"PY"
+]
+},
+"in-gaap_CarryingAmountAccumulatedAmortizationAndImpairmentAndGrossCarryingAmountAxis=in-gaap_AccumulatedAmortizationAndImpairmentMember|in-gaap_SubClassesOfIntangibleAssetsAxis=*": {
+"in-gaap_DisposalsIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_DisposalsIntangibleAssetsOthers": [
+"CY",
+"PY"
+],
+"in-gaap_DisposalsIntangibleAssetsThroughDemergers": [
+"CY",
+"PY"
+],
+"in-gaap_ImpairmentLossRecognisedInProfitOrLossIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsIntangibleAssetsOthers": [
+"CY",
+"PY"
+],
+"in-gaap_RetirementsOfIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_ReversalOfImpairmentLossRecognisedInProfitOrLossIntangibleAssets": [
+"CY",
+"PY"
+]
+},
+"in-gaap_CarryingAmountAccumulatedAmortizationAndImpairmentAndGrossCarryingAmountAxis=in-gaap_AccumulatedAmortizationAndImpairmentMember|in-gaap_SubClassesOfIntangibleAssetsAxis=in-gaap_IntangibleAssetsOtherThanInternallyGeneratedMember": {
+"in-gaap_DisposalsIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_DisposalsIntangibleAssetsOthers": [
+"CY",
+"PY"
+],
+"in-gaap_DisposalsIntangibleAssetsThroughDemergers": [
+"CY",
+"PY"
+],
+"in-gaap_ImpairmentLossRecognisedInProfitOrLossIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsIntangibleAssetsOthers": [
+"CY",
+"PY"
+],
+"in-gaap_RetirementsOfIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_ReversalOfImpairmentLossRecognisedInProfitOrLossIntangibleAssets": [
+"CY",
+"PY"
+]
+},
+"in-gaap_CarryingAmountAccumulatedAmortizationAndImpairmentAndGrossCarryingAmountAxis=in-gaap_GrossCarryingAmountMember": {
+"in-gaap_AcquisitionsThroughBusinessCombinationsIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_AdditionsOtherThanThroughBusinessCombinationsIntangibleAssets": [
+"CY"
+],
+"in-gaap_AdditionsThroughInternalDevelopment": [
+"CY",
+"PY"
+],
+"in-gaap_AdditionsToIntangibleAssets": [
+"CY"
+],
+"in-gaap_ChangesInIntangibleAssets": [
+"CY"
+],
+"in-gaap_DisposalsIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_DisposalsIntangibleAssetsOthers": [
+"CY",
+"PY"
+],
+"in-gaap_DisposalsIntangibleAssetsThroughDemergers": [
+"CY",
+"PY"
+],
+"in-gaap_IncreaseDecreaseThroughNetExchangeDifferencesIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsIntangibleAssetsOthers": [
+"CY",
+"PY"
+],
+"in-gaap_RetirementsOfIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_RevaluationIncreaseDecreaseIntangibleAssets": [
+"CY",
+"PY"
+]
+},
+"in-gaap_CarryingAmountAccumulatedAmortizationAndImpairmentAndGrossCarryingAmountAxis=in-gaap_GrossCarryingAmountMember|in-gaap_ClassesOfIntangibleAssetsAxis=*|in-gaap_SubClassesOfIntangibleAssetsAxis=*": {
+"in-gaap_AcquisitionsThroughBusinessCombinationsIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_AdditionsOtherThanThroughBusinessCombinationsIntangibleAssets": [
+"CY"
+],
+"in-gaap_AdditionsThroughInternalDevelopment": [
+"CY",
+"PY"
+],
+"in-gaap_AdditionsToIntangibleAssets": [
+"CY"
+],
+"in-gaap_ChangesInIntangibleAssets": [
+"CY"
+],
+"in-gaap_DisposalsIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_DisposalsIntangibleAssetsOthers": [
+"CY",
+"PY"
+],
+"in-gaap_DisposalsIntangibleAssetsThroughDemergers": [
+"CY",
+"PY"
+],
+"in-gaap_IncreaseDecreaseThroughNetExchangeDifferencesIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsIntangibleAssetsOthers": [
+"CY",
+"PY"
+],
+"in-gaap_RetirementsOfIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_RevaluationIncreaseDecreaseIntangibleAssets": [
+"CY",
+"PY"
+]
+},
+"in-gaap_CarryingAmountAccumulatedAmortizationAndImpairmentAndGrossCarryingAmountAxis=in-gaap_GrossCarryingAmountMember|in-gaap_ClassesOfIntangibleAssetsAxis=in-gaap_ComputerSoftwareMember|in-gaap_SubClassesOfIntangibleAssetsAxis=in-gaap_IntangibleAssetsOtherThanInternallyGeneratedMember": {
+"in-gaap_AcquisitionsThroughBusinessCombinationsIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_AdditionsOtherThanThroughBusinessCombinationsIntangibleAssets": [
+"CY"
+],
+"in-gaap_AdditionsThroughInternalDevelopment": [
+"CY",
+"PY"
+],
+"in-gaap_AdditionsToIntangibleAssets": [
+"CY"
+],
+"in-gaap_ChangesInIntangibleAssets": [
+"CY"
+],
+"in-gaap_DisposalsIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_DisposalsIntangibleAssetsOthers": [
+"CY",
+"PY"
+],
+"in-gaap_DisposalsIntangibleAssetsThroughDemergers": [
+"CY",
+"PY"
+],
+"in-gaap_IncreaseDecreaseThroughNetExchangeDifferencesIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsIntangibleAssetsOthers": [
+"CY",
+"PY"
+],
+"in-gaap_RetirementsOfIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_RevaluationIncreaseDecreaseIntangibleAssets": [
+"CY",
+"PY"
+]
+},
+"in-gaap_CarryingAmountAccumulatedAmortizationAndImpairmentAndGrossCarryingAmountAxis=in-gaap_GrossCarryingAmountMember|in-gaap_SubClassesOfIntangibleAssetsAxis=*": {
+"in-gaap_AcquisitionsThroughBusinessCombinationsIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_AdditionsOtherThanThroughBusinessCombinationsIntangibleAssets": [
+"CY"
+],
+"in-gaap_AdditionsThroughInternalDevelopment": [
+"CY",
+"PY"
+],
+"in-gaap_AdditionsToIntangibleAssets": [
+"CY"
+],
+"in-gaap_ChangesInIntangibleAssets": [
+"CY"
+],
+"in-gaap_DisposalsIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_DisposalsIntangibleAssetsOthers": [
+"CY",
+"PY"
+],
+"in-gaap_DisposalsIntangibleAssetsThroughDemergers": [
+"CY",
+"PY"
+],
+"in-gaap_IncreaseDecreaseThroughNetExchangeDifferencesIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsIntangibleAssetsOthers": [
+"CY",
+"PY"
+],
+"in-gaap_RetirementsOfIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_RevaluationIncreaseDecreaseIntangibleAssets": [
+"CY",
+"PY"
+]
+},
+"in-gaap_CarryingAmountAccumulatedAmortizationAndImpairmentAndGrossCarryingAmountAxis=in-gaap_GrossCarryingAmountMember|in-gaap_SubClassesOfIntangibleAssetsAxis=in-gaap_IntangibleAssetsOtherThanInternallyGeneratedMember": {
+"in-gaap_AcquisitionsThroughBusinessCombinationsIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_AdditionsOtherThanThroughBusinessCombinationsIntangibleAssets": [
+"CY"
+],
+"in-gaap_AdditionsThroughInternalDevelopment": [
+"CY",
+"PY"
+],
+"in-gaap_AdditionsToIntangibleAssets": [
+"CY"
+],
+"in-gaap_ChangesInIntangibleAssets": [
+"CY"
+],
+"in-gaap_DisposalsIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_DisposalsIntangibleAssetsOthers": [
+"CY",
+"PY"
+],
+"in-gaap_DisposalsIntangibleAssetsThroughDemergers": [
+"CY",
+"PY"
+],
+"in-gaap_IncreaseDecreaseThroughNetExchangeDifferencesIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsIntangibleAssetsOthers": [
+"CY",
+"PY"
+],
+"in-gaap_RetirementsOfIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_RevaluationIncreaseDecreaseIntangibleAssets": [
+"CY",
+"PY"
+]
+},
+"in-gaap_ClassesOfIntangibleAssetsAxis=*|in-gaap_SubClassesOfIntangibleAssetsAxis=*": {
+"in-gaap_AcquisitionsThroughBusinessCombinationsIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_AdditionsOtherThanThroughBusinessCombinationsIntangibleAssets": [
+"CY"
+],
+"in-gaap_AdditionsThroughInternalDevelopment": [
+"CY",
+"PY"
+],
+"in-gaap_AdditionsToIntangibleAssets": [
+"CY"
+],
+"in-gaap_ChangesInIntangibleAssets": [
+"PY"
+],
+"in-gaap_DisposalsIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_DisposalsIntangibleAssetsOthers": [
+"CY",
+"PY"
+],
+"in-gaap_DisposalsIntangibleAssetsThroughDemergers": [
+"CY",
+"PY"
+],
+"in-gaap_ImpairmentLossRecognisedInProfitOrLossIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_IncreaseDecreaseThroughNetExchangeDifferencesIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsIntangibleAssetsOthers": [
+"CY",
+"PY"
+],
+"in-gaap_RetirementsOfIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_RevaluationIncreaseDecreaseIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_ReversalOfImpairmentLossRecognisedInProfitOrLossIntangibleAssets": [
+"CY",
+"PY"
+]
+},
+"in-gaap_ClassesOfIntangibleAssetsAxis=in-gaap_ComputerSoftwareMember|in-gaap_SubClassesOfIntangibleAssetsAxis=in-gaap_IntangibleAssetsOtherThanInternallyGeneratedMember": {
+"in-gaap_AcquisitionsThroughBusinessCombinationsIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_AdditionsOtherThanThroughBusinessCombinationsIntangibleAssets": [
+"CY"
+],
+"in-gaap_AdditionsThroughInternalDevelopment": [
+"CY",
+"PY"
+],
+"in-gaap_AdditionsToIntangibleAssets": [
+"CY"
+],
+"in-gaap_ChangesInIntangibleAssets": [
+"PY"
+],
+"in-gaap_DisposalsIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_DisposalsIntangibleAssetsOthers": [
+"CY",
+"PY"
+],
+"in-gaap_DisposalsIntangibleAssetsThroughDemergers": [
+"CY",
+"PY"
+],
+"in-gaap_ImpairmentLossRecognisedInProfitOrLossIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_IncreaseDecreaseThroughNetExchangeDifferencesIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsIntangibleAssetsOthers": [
+"CY",
+"PY"
+],
+"in-gaap_RetirementsOfIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_RevaluationIncreaseDecreaseIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_ReversalOfImpairmentLossRecognisedInProfitOrLossIntangibleAssets": [
+"CY",
+"PY"
+]
+},
+"in-gaap_SubClassesOfIntangibleAssetsAxis=*": {
+"in-gaap_AcquisitionsThroughBusinessCombinationsIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_AdditionsOtherThanThroughBusinessCombinationsIntangibleAssets": [
+"CY"
+],
+"in-gaap_AdditionsThroughInternalDevelopment": [
+"CY",
+"PY"
+],
+"in-gaap_AdditionsToIntangibleAssets": [
+"CY"
+],
+"in-gaap_ChangesInIntangibleAssets": [
+"PY"
+],
+"in-gaap_DisposalsIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_DisposalsIntangibleAssetsOthers": [
+"CY",
+"PY"
+],
+"in-gaap_DisposalsIntangibleAssetsThroughDemergers": [
+"CY",
+"PY"
+],
+"in-gaap_ImpairmentLossRecognisedInProfitOrLossIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_IncreaseDecreaseThroughNetExchangeDifferencesIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsIntangibleAssetsOthers": [
+"CY",
+"PY"
+],
+"in-gaap_RetirementsOfIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_RevaluationIncreaseDecreaseIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_ReversalOfImpairmentLossRecognisedInProfitOrLossIntangibleAssets": [
+"CY",
+"PY"
+]
+},
+"in-gaap_SubClassesOfIntangibleAssetsAxis=in-gaap_IntangibleAssetsOtherThanInternallyGeneratedMember": {
+"in-gaap_AcquisitionsThroughBusinessCombinationsIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_AdditionsOtherThanThroughBusinessCombinationsIntangibleAssets": [
+"CY"
+],
+"in-gaap_AdditionsThroughInternalDevelopment": [
+"CY",
+"PY"
+],
+"in-gaap_AdditionsToIntangibleAssets": [
+"CY"
+],
+"in-gaap_ChangesInIntangibleAssets": [
+"PY"
+],
+"in-gaap_DisposalsIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_DisposalsIntangibleAssetsOthers": [
+"CY",
+"PY"
+],
+"in-gaap_DisposalsIntangibleAssetsThroughDemergers": [
+"CY",
+"PY"
+],
+"in-gaap_ImpairmentLossRecognisedInProfitOrLossIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_IncreaseDecreaseThroughNetExchangeDifferencesIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsIntangibleAssetsOthers": [
+"CY",
+"PY"
+],
+"in-gaap_RetirementsOfIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_RevaluationIncreaseDecreaseIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_ReversalOfImpairmentLossRecognisedInProfitOrLossIntangibleAssets": [
+"CY",
+"PY"
+]
+}
+},
+"in-gaap_DisclosureOfOtherProvisionsTable": {
+"in-gaap_ClassesOfOtherProvisionsAxis=in-gaap_MiscellaneousOtherProvisionsMember": {
+"in-gaap_AdditionalProvisionsOtherProvisions": [
+"CY",
+"PY"
+],
+"in-gaap_ChangesInOtherProvisions": [
+"CY",
+"PY"
+],
+"in-gaap_IncreaseInExistingOtherProvisions": [
+"CY",
+"PY"
+],
+"in-gaap_OtherProvisions": [
+"CY",
+"OPEN",
+"PY"
+],
+"in-gaap_ProvisionUsedOtherProvisions": [
+"CY",
+"PY"
+],
+"in-gaap_UnusedProvisionReversedOtherProvisions": [
+"CY",
+"PY"
+]
+}
+},
+"in-gaap_DisclosureOfRelationshipAndTransactionsBetweenRelatedPartiesTable": {
+"in-gaap_CategoriesOfRelatedPartiesAxis=*": {
+"in-gaap_AmountWrittenBackDuringPeriodInRespectOfDebtsDueToRelatedParties": [
+"PY"
+],
+"in-gaap_AmountWrittenOffDuringPeriodInRespectOfDebtsDueFromRelatedParties": [
+"PY"
+]
+}
+},
+"in-gaap_DisclosureOfTangibleAssetsTable": {
+"in-gaap_CarryingAmountAccumulatedDepreciationAndGrossCarryingAmountAxis=in-gaap_AccumulatedDepreciationAndImpairmentMember": {
+"in-gaap_DisposalsTangibleAssetsThroughDemergers": [
+"CY",
+"PY"
+],
+"in-gaap_ImpairmentLossRecognisedInProfitOrLossTangibleAssets": [
+"PY"
+],
+"in-gaap_OtherAdjustmentsTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsTangibleAssetsOthers": [
+"CY",
+"PY"
+],
+"in-gaap_ReversalOfImpairmentLossRecognisedInProfitOrLossTangibleAssets": [
+"CY",
+"PY"
+]
+},
+"in-gaap_CarryingAmountAccumulatedDepreciationAndGrossCarryingAmountAxis=in-gaap_AccumulatedDepreciationAndImpairmentMember|in-gaap_ClassesOfTangibleAssetsAxis=*|in-gaap_SubClassesOfTangibleAssetsAxis=*": {
+"in-gaap_ChangesInTangibleAssets": [
+"PY"
+],
+"in-gaap_DisposalsTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_DisposalsTangibleAssetsOthers": [
+"CY",
+"PY"
+],
+"in-gaap_DisposalsTangibleAssetsThroughDemergers": [
+"CY",
+"PY"
+],
+"in-gaap_ImpairmentLossRecognisedInProfitOrLossTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsTangibleAssetsOthers": [
+"CY",
+"PY"
+],
+"in-gaap_ReversalOfImpairmentLossRecognisedInProfitOrLossTangibleAssets": [
+"CY",
+"PY"
+]
+},
+"in-gaap_CarryingAmountAccumulatedDepreciationAndGrossCarryingAmountAxis=in-gaap_AccumulatedDepreciationAndImpairmentMember|in-gaap_ClassesOfTangibleAssetsAxis=in-gaap_ComputerEquipmentsMember|in-gaap_SubClassesOfTangibleAssetsAxis=in-gaap_OwnedAssetsMember": {
+"in-gaap_DisposalsTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_DisposalsTangibleAssetsOthers": [
+"CY",
+"PY"
+],
+"in-gaap_DisposalsTangibleAssetsThroughDemergers": [
+"CY",
+"PY"
+],
+"in-gaap_ImpairmentLossRecognisedInProfitOrLossTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsTangibleAssetsOthers": [
+"CY",
+"PY"
+],
+"in-gaap_ReversalOfImpairmentLossRecognisedInProfitOrLossTangibleAssets": [
+"CY",
+"PY"
+]
+},
+"in-gaap_CarryingAmountAccumulatedDepreciationAndGrossCarryingAmountAxis=in-gaap_AccumulatedDepreciationAndImpairmentMember|in-gaap_ClassesOfTangibleAssetsAxis=in-gaap_FurnitureAndFixturesMember|in-gaap_SubClassesOfTangibleAssetsAxis=in-gaap_OwnedAssetsMember": {
+"in-gaap_DisposalsTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_DisposalsTangibleAssetsOthers": [
+"CY",
+"PY"
+],
+"in-gaap_DisposalsTangibleAssetsThroughDemergers": [
+"CY",
+"PY"
+],
+"in-gaap_ImpairmentLossRecognisedInProfitOrLossTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsTangibleAssetsOthers": [
+"CY",
+"PY"
+],
+"in-gaap_ReversalOfImpairmentLossRecognisedInProfitOrLossTangibleAssets": [
+"CY",
+"PY"
+]
+},
+"in-gaap_CarryingAmountAccumulatedDepreciationAndGrossCarryingAmountAxis=in-gaap_AccumulatedDepreciationAndImpairmentMember|in-gaap_ClassesOfTangibleAssetsAxis=in-gaap_LeaseholdImprovementsMember|in-gaap_SubClassesOfTangibleAssetsAxis=in-gaap_OwnedAssetsMember": {
+"in-gaap_DisposalsTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_DisposalsTangibleAssetsOthers": [
+"CY",
+"PY"
+],
+"in-gaap_DisposalsTangibleAssetsThroughDemergers": [
+"CY",
+"PY"
+],
+"in-gaap_ImpairmentLossRecognisedInProfitOrLossTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsTangibleAssetsOthers": [
+"CY",
+"PY"
+],
+"in-gaap_ReversalOfImpairmentLossRecognisedInProfitOrLossTangibleAssets": [
+"CY",
+"PY"
+]
+},
+"in-gaap_CarryingAmountAccumulatedDepreciationAndGrossCarryingAmountAxis=in-gaap_AccumulatedDepreciationAndImpairmentMember|in-gaap_ClassesOfTangibleAssetsAxis=in-gaap_MotorVehiclesMember|in-gaap_SubClassesOfTangibleAssetsAxis=in-gaap_OwnedAssetsMember": {
+"in-gaap_ChangesInTangibleAssets": [
+"PY"
+],
+"in-gaap_DisposalsTangibleAssetsThroughDemergers": [
+"CY",
+"PY"
+],
+"in-gaap_ImpairmentLossRecognisedInProfitOrLossTangibleAssets": [
+"PY"
+],
+"in-gaap_OtherAdjustmentsTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsTangibleAssetsOthers": [
+"CY",
+"PY"
+],
+"in-gaap_ReversalOfImpairmentLossRecognisedInProfitOrLossTangibleAssets": [
+"CY",
+"PY"
+]
+},
+"in-gaap_CarryingAmountAccumulatedDepreciationAndGrossCarryingAmountAxis=in-gaap_AccumulatedDepreciationAndImpairmentMember|in-gaap_ClassesOfTangibleAssetsAxis=in-gaap_OfficeEquipmentMember|in-gaap_SubClassesOfTangibleAssetsAxis=in-gaap_OwnedAssetsMember": {
+"in-gaap_DisposalsTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_DisposalsTangibleAssetsOthers": [
+"CY",
+"PY"
+],
+"in-gaap_DisposalsTangibleAssetsThroughDemergers": [
+"CY",
+"PY"
+],
+"in-gaap_ImpairmentLossRecognisedInProfitOrLossTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsTangibleAssetsOthers": [
+"CY",
+"PY"
+],
+"in-gaap_ReversalOfImpairmentLossRecognisedInProfitOrLossTangibleAssets": [
+"CY",
+"PY"
+]
+},
+"in-gaap_CarryingAmountAccumulatedDepreciationAndGrossCarryingAmountAxis=in-gaap_AccumulatedDepreciationAndImpairmentMember|in-gaap_ClassesOfTangibleAssetsAxis=in-gaap_VehiclesMember|in-gaap_SubClassesOfTangibleAssetsAxis=in-gaap_OwnedAssetsMember": {
+"in-gaap_ChangesInTangibleAssets": [
+"PY"
+],
+"in-gaap_DisposalsTangibleAssetsThroughDemergers": [
+"CY",
+"PY"
+],
+"in-gaap_ImpairmentLossRecognisedInProfitOrLossTangibleAssets": [
+"PY"
+],
+"in-gaap_OtherAdjustmentsTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsTangibleAssetsOthers": [
+"CY",
+"PY"
+],
+"in-gaap_ReversalOfImpairmentLossRecognisedInProfitOrLossTangibleAssets": [
+"CY",
+"PY"
+]
+},
+"in-gaap_CarryingAmountAccumulatedDepreciationAndGrossCarryingAmountAxis=in-gaap_AccumulatedDepreciationAndImpairmentMember|in-gaap_SubClassesOfTangibleAssetsAxis=*": {
+"in-gaap_DisposalsTangibleAssetsThroughDemergers": [
+"CY",
+"PY"
+],
+"in-gaap_ImpairmentLossRecognisedInProfitOrLossTangibleAssets": [
+"PY"
+],
+"in-gaap_OtherAdjustmentsTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsTangibleAssetsOthers": [
+"CY",
+"PY"
+],
+"in-gaap_ReversalOfImpairmentLossRecognisedInProfitOrLossTangibleAssets": [
+"CY",
+"PY"
+]
+},
+"in-gaap_CarryingAmountAccumulatedDepreciationAndGrossCarryingAmountAxis=in-gaap_AccumulatedDepreciationAndImpairmentMember|in-gaap_SubClassesOfTangibleAssetsAxis=in-gaap_OwnedAssetsMember": {
+"in-gaap_DisposalsTangibleAssetsThroughDemergers": [
+"CY",
+"PY"
+],
+"in-gaap_ImpairmentLossRecognisedInProfitOrLossTangibleAssets": [
+"PY"
+],
+"in-gaap_OtherAdjustmentsTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsTangibleAssetsOthers": [
+"CY",
+"PY"
+],
+"in-gaap_ReversalOfImpairmentLossRecognisedInProfitOrLossTangibleAssets": [
+"CY",
+"PY"
+]
+},
+"in-gaap_CarryingAmountAccumulatedDepreciationAndGrossCarryingAmountAxis=in-gaap_GrossCarryingAmountMember": {
+"in-gaap_AcquisitionsThroughBusinessCombinationsTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_DisposalsTangibleAssetsThroughDemergers": [
+"CY",
+"PY"
+],
+"in-gaap_IncreaseDecreaseThroughNetExchangeDifferencesTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsTangibleAssetsOthers": [
+"CY",
+"PY"
+],
+"in-gaap_RevaluationIncreaseDecreaseTangibleAssets": [
+"CY",
+"PY"
+]
+},
+"in-gaap_CarryingAmountAccumulatedDepreciationAndGrossCarryingAmountAxis=in-gaap_GrossCarryingAmountMember|in-gaap_ClassesOfTangibleAssetsAxis=*|in-gaap_SubClassesOfTangibleAssetsAxis=*": {
+"in-gaap_AcquisitionsThroughBusinessCombinationsTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_AdditionsOtherThanThroughBusinessCombinationsTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_ChangesInTangibleAssets": [
+"PY"
+],
+"in-gaap_DisposalsTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_DisposalsTangibleAssetsOthers": [
+"CY",
+"PY"
+],
+"in-gaap_DisposalsTangibleAssetsThroughDemergers": [
+"CY",
+"PY"
+],
+"in-gaap_IncreaseDecreaseThroughNetExchangeDifferencesTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsTangibleAssetsOthers": [
+"CY",
+"PY"
+],
+"in-gaap_RevaluationIncreaseDecreaseTangibleAssets": [
+"CY",
+"PY"
+]
+},
+"in-gaap_CarryingAmountAccumulatedDepreciationAndGrossCarryingAmountAxis=in-gaap_GrossCarryingAmountMember|in-gaap_ClassesOfTangibleAssetsAxis=in-gaap_ComputerEquipmentsMember|in-gaap_SubClassesOfTangibleAssetsAxis=in-gaap_OwnedAssetsMember": {
+"in-gaap_AcquisitionsThroughBusinessCombinationsTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_DisposalsTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_DisposalsTangibleAssetsOthers": [
+"CY",
+"PY"
+],
+"in-gaap_DisposalsTangibleAssetsThroughDemergers": [
+"CY",
+"PY"
+],
+"in-gaap_IncreaseDecreaseThroughNetExchangeDifferencesTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsTangibleAssetsOthers": [
+"CY",
+"PY"
+],
+"in-gaap_RevaluationIncreaseDecreaseTangibleAssets": [
+"CY",
+"PY"
+]
+},
+"in-gaap_CarryingAmountAccumulatedDepreciationAndGrossCarryingAmountAxis=in-gaap_GrossCarryingAmountMember|in-gaap_ClassesOfTangibleAssetsAxis=in-gaap_FurnitureAndFixturesMember|in-gaap_SubClassesOfTangibleAssetsAxis=in-gaap_OwnedAssetsMember": {
+"in-gaap_AcquisitionsThroughBusinessCombinationsTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_AdditionsOtherThanThroughBusinessCombinationsTangibleAssets": [
+"PY"
+],
+"in-gaap_ChangesInTangibleAssets": [
+"PY"
+],
+"in-gaap_DisposalsTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_DisposalsTangibleAssetsOthers": [
+"CY",
+"PY"
+],
+"in-gaap_DisposalsTangibleAssetsThroughDemergers": [
+"CY",
+"PY"
+],
+"in-gaap_IncreaseDecreaseThroughNetExchangeDifferencesTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsTangibleAssetsOthers": [
+"CY",
+"PY"
+],
+"in-gaap_RevaluationIncreaseDecreaseTangibleAssets": [
+"CY",
+"PY"
+]
+},
+"in-gaap_CarryingAmountAccumulatedDepreciationAndGrossCarryingAmountAxis=in-gaap_GrossCarryingAmountMember|in-gaap_ClassesOfTangibleAssetsAxis=in-gaap_LeaseholdImprovementsMember|in-gaap_SubClassesOfTangibleAssetsAxis=in-gaap_OwnedAssetsMember": {
+"in-gaap_AcquisitionsThroughBusinessCombinationsTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_AdditionsOtherThanThroughBusinessCombinationsTangibleAssets": [
+"PY"
+],
+"in-gaap_ChangesInTangibleAssets": [
+"PY"
+],
+"in-gaap_DisposalsTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_DisposalsTangibleAssetsOthers": [
+"CY",
+"PY"
+],
+"in-gaap_DisposalsTangibleAssetsThroughDemergers": [
+"CY",
+"PY"
+],
+"in-gaap_IncreaseDecreaseThroughNetExchangeDifferencesTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsTangibleAssetsOthers": [
+"CY",
+"PY"
+],
+"in-gaap_RevaluationIncreaseDecreaseTangibleAssets": [
+"CY",
+"PY"
+]
+},
+"in-gaap_CarryingAmountAccumulatedDepreciationAndGrossCarryingAmountAxis=in-gaap_GrossCarryingAmountMember|in-gaap_ClassesOfTangibleAssetsAxis=in-gaap_MotorVehiclesMember|in-gaap_SubClassesOfTangibleAssetsAxis=in-gaap_OwnedAssetsMember": {
+"in-gaap_AcquisitionsThroughBusinessCombinationsTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_AdditionsOtherThanThroughBusinessCombinationsTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_DisposalsTangibleAssetsThroughDemergers": [
+"CY",
+"PY"
+],
+"in-gaap_IncreaseDecreaseThroughNetExchangeDifferencesTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsTangibleAssetsOthers": [
+"CY",
+"PY"
+],
+"in-gaap_RevaluationIncreaseDecreaseTangibleAssets": [
+"CY",
+"PY"
+]
+},
+"in-gaap_CarryingAmountAccumulatedDepreciationAndGrossCarryingAmountAxis=in-gaap_GrossCarryingAmountMember|in-gaap_ClassesOfTangibleAssetsAxis=in-gaap_OfficeEquipmentMember|in-gaap_SubClassesOfTangibleAssetsAxis=in-gaap_OwnedAssetsMember": {
+"in-gaap_AcquisitionsThroughBusinessCombinationsTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_DisposalsTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_DisposalsTangibleAssetsOthers": [
+"CY",
+"PY"
+],
+"in-gaap_DisposalsTangibleAssetsThroughDemergers": [
+"CY",
+"PY"
+],
+"in-gaap_IncreaseDecreaseThroughNetExchangeDifferencesTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsTangibleAssetsOthers": [
+"CY",
+"PY"
+],
+"in-gaap_RevaluationIncreaseDecreaseTangibleAssets": [
+"CY",
+"PY"
+]
+},
+"in-gaap_CarryingAmountAccumulatedDepreciationAndGrossCarryingAmountAxis=in-gaap_GrossCarryingAmountMember|in-gaap_ClassesOfTangibleAssetsAxis=in-gaap_VehiclesMember|in-gaap_SubClassesOfTangibleAssetsAxis=in-gaap_OwnedAssetsMember": {
+"in-gaap_AcquisitionsThroughBusinessCombinationsTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_AdditionsOtherThanThroughBusinessCombinationsTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_DisposalsTangibleAssetsThroughDemergers": [
+"CY",
+"PY"
+],
+"in-gaap_IncreaseDecreaseThroughNetExchangeDifferencesTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsTangibleAssetsOthers": [
+"CY",
+"PY"
+],
+"in-gaap_RevaluationIncreaseDecreaseTangibleAssets": [
+"CY",
+"PY"
+]
+},
+"in-gaap_CarryingAmountAccumulatedDepreciationAndGrossCarryingAmountAxis=in-gaap_GrossCarryingAmountMember|in-gaap_SubClassesOfTangibleAssetsAxis=*": {
+"in-gaap_AcquisitionsThroughBusinessCombinationsTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_DisposalsTangibleAssetsThroughDemergers": [
+"CY",
+"PY"
+],
+"in-gaap_IncreaseDecreaseThroughNetExchangeDifferencesTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsTangibleAssetsOthers": [
+"CY",
+"PY"
+],
+"in-gaap_RevaluationIncreaseDecreaseTangibleAssets": [
+"CY",
+"PY"
+]
+},
+"in-gaap_CarryingAmountAccumulatedDepreciationAndGrossCarryingAmountAxis=in-gaap_GrossCarryingAmountMember|in-gaap_SubClassesOfTangibleAssetsAxis=in-gaap_OwnedAssetsMember": {
+"in-gaap_AcquisitionsThroughBusinessCombinationsTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_DisposalsTangibleAssetsThroughDemergers": [
+"CY",
+"PY"
+],
+"in-gaap_IncreaseDecreaseThroughNetExchangeDifferencesTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsTangibleAssetsOthers": [
+"CY",
+"PY"
+],
+"in-gaap_RevaluationIncreaseDecreaseTangibleAssets": [
+"CY",
+"PY"
+]
+},
+"in-gaap_ClassesOfTangibleAssetsAxis=*|in-gaap_SubClassesOfTangibleAssetsAxis=*": {
+"in-gaap_AcquisitionsThroughBusinessCombinationsTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_AdditionsOtherThanThroughBusinessCombinationsTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_ChangesInTangibleAssets": [
+"CY"
+],
+"in-gaap_DisposalsTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_DisposalsTangibleAssetsOthers": [
+"CY",
+"PY"
+],
+"in-gaap_DisposalsTangibleAssetsThroughDemergers": [
+"CY",
+"PY"
+],
+"in-gaap_ImpairmentLossRecognisedInProfitOrLossTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_IncreaseDecreaseThroughNetExchangeDifferencesTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsTangibleAssetsOthers": [
+"CY",
+"PY"
+],
+"in-gaap_RevaluationIncreaseDecreaseTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_ReversalOfImpairmentLossRecognisedInProfitOrLossTangibleAssets": [
+"CY",
+"PY"
+]
+},
+"in-gaap_ClassesOfTangibleAssetsAxis=in-gaap_ComputerEquipmentsMember|in-gaap_SubClassesOfTangibleAssetsAxis=in-gaap_OwnedAssetsMember": {
+"in-gaap_AcquisitionsThroughBusinessCombinationsTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_DisposalsTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_DisposalsTangibleAssetsOthers": [
+"CY",
+"PY"
+],
+"in-gaap_DisposalsTangibleAssetsThroughDemergers": [
+"CY",
+"PY"
+],
+"in-gaap_ImpairmentLossRecognisedInProfitOrLossTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_IncreaseDecreaseThroughNetExchangeDifferencesTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsTangibleAssetsOthers": [
+"CY",
+"PY"
+],
+"in-gaap_RevaluationIncreaseDecreaseTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_ReversalOfImpairmentLossRecognisedInProfitOrLossTangibleAssets": [
+"CY",
+"PY"
+]
+},
+"in-gaap_ClassesOfTangibleAssetsAxis=in-gaap_FurnitureAndFixturesMember|in-gaap_SubClassesOfTangibleAssetsAxis=in-gaap_OwnedAssetsMember": {
+"in-gaap_AcquisitionsThroughBusinessCombinationsTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_AdditionsOtherThanThroughBusinessCombinationsTangibleAssets": [
+"PY"
+],
+"in-gaap_ChangesInTangibleAssets": [
+"CY"
+],
+"in-gaap_DisposalsTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_DisposalsTangibleAssetsOthers": [
+"CY",
+"PY"
+],
+"in-gaap_DisposalsTangibleAssetsThroughDemergers": [
+"CY",
+"PY"
+],
+"in-gaap_ImpairmentLossRecognisedInProfitOrLossTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_IncreaseDecreaseThroughNetExchangeDifferencesTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsTangibleAssetsOthers": [
+"CY",
+"PY"
+],
+"in-gaap_RevaluationIncreaseDecreaseTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_ReversalOfImpairmentLossRecognisedInProfitOrLossTangibleAssets": [
+"CY",
+"PY"
+]
+},
+"in-gaap_ClassesOfTangibleAssetsAxis=in-gaap_LeaseholdImprovementsMember|in-gaap_SubClassesOfTangibleAssetsAxis=in-gaap_OwnedAssetsMember": {
+"in-gaap_AcquisitionsThroughBusinessCombinationsTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_AdditionsOtherThanThroughBusinessCombinationsTangibleAssets": [
+"PY"
+],
+"in-gaap_DisposalsTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_DisposalsTangibleAssetsOthers": [
+"CY",
+"PY"
+],
+"in-gaap_DisposalsTangibleAssetsThroughDemergers": [
+"CY",
+"PY"
+],
+"in-gaap_ImpairmentLossRecognisedInProfitOrLossTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_IncreaseDecreaseThroughNetExchangeDifferencesTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsTangibleAssetsOthers": [
+"CY",
+"PY"
+],
+"in-gaap_RevaluationIncreaseDecreaseTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_ReversalOfImpairmentLossRecognisedInProfitOrLossTangibleAssets": [
+"CY",
+"PY"
+]
+},
+"in-gaap_ClassesOfTangibleAssetsAxis=in-gaap_MotorVehiclesMember|in-gaap_SubClassesOfTangibleAssetsAxis=in-gaap_OwnedAssetsMember": {
+"in-gaap_AcquisitionsThroughBusinessCombinationsTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_AdditionsOtherThanThroughBusinessCombinationsTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_DisposalsTangibleAssetsThroughDemergers": [
+"CY",
+"PY"
+],
+"in-gaap_ImpairmentLossRecognisedInProfitOrLossTangibleAssets": [
+"PY"
+],
+"in-gaap_IncreaseDecreaseThroughNetExchangeDifferencesTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsTangibleAssetsOthers": [
+"CY",
+"PY"
+],
+"in-gaap_RevaluationIncreaseDecreaseTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_ReversalOfImpairmentLossRecognisedInProfitOrLossTangibleAssets": [
+"CY",
+"PY"
+]
+},
+"in-gaap_ClassesOfTangibleAssetsAxis=in-gaap_OfficeEquipmentMember|in-gaap_SubClassesOfTangibleAssetsAxis=in-gaap_OwnedAssetsMember": {
+"in-gaap_AcquisitionsThroughBusinessCombinationsTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_DisposalsTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_DisposalsTangibleAssetsOthers": [
+"CY",
+"PY"
+],
+"in-gaap_DisposalsTangibleAssetsThroughDemergers": [
+"CY",
+"PY"
+],
+"in-gaap_ImpairmentLossRecognisedInProfitOrLossTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_IncreaseDecreaseThroughNetExchangeDifferencesTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsTangibleAssetsOthers": [
+"CY",
+"PY"
+],
+"in-gaap_RevaluationIncreaseDecreaseTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_ReversalOfImpairmentLossRecognisedInProfitOrLossTangibleAssets": [
+"CY",
+"PY"
+]
+},
+"in-gaap_ClassesOfTangibleAssetsAxis=in-gaap_VehiclesMember|in-gaap_SubClassesOfTangibleAssetsAxis=in-gaap_OwnedAssetsMember": {
+"in-gaap_AcquisitionsThroughBusinessCombinationsTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_AdditionsOtherThanThroughBusinessCombinationsTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_DisposalsTangibleAssetsThroughDemergers": [
+"CY",
+"PY"
+],
+"in-gaap_ImpairmentLossRecognisedInProfitOrLossTangibleAssets": [
+"PY"
+],
+"in-gaap_IncreaseDecreaseThroughNetExchangeDifferencesTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsTangibleAssetsOthers": [
+"CY",
+"PY"
+],
+"in-gaap_RevaluationIncreaseDecreaseTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_ReversalOfImpairmentLossRecognisedInProfitOrLossTangibleAssets": [
+"CY",
+"PY"
+]
+},
+"in-gaap_SubClassesOfTangibleAssetsAxis=*": {
+"in-gaap_AcquisitionsThroughBusinessCombinationsTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_DisposalsTangibleAssetsThroughDemergers": [
+"CY",
+"PY"
+],
+"in-gaap_ImpairmentLossRecognisedInProfitOrLossTangibleAssets": [
+"PY"
+],
+"in-gaap_IncreaseDecreaseThroughNetExchangeDifferencesTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsTangibleAssetsOthers": [
+"CY",
+"PY"
+],
+"in-gaap_RevaluationIncreaseDecreaseTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_ReversalOfImpairmentLossRecognisedInProfitOrLossTangibleAssets": [
+"CY",
+"PY"
+]
+},
+"in-gaap_SubClassesOfTangibleAssetsAxis=in-gaap_OwnedAssetsMember": {
+"in-gaap_AcquisitionsThroughBusinessCombinationsTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_DisposalsTangibleAssetsThroughDemergers": [
+"CY",
+"PY"
+],
+"in-gaap_ImpairmentLossRecognisedInProfitOrLossTangibleAssets": [
+"PY"
+],
+"in-gaap_IncreaseDecreaseThroughNetExchangeDifferencesTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsTangibleAssetsOthers": [
+"CY",
+"PY"
+],
+"in-gaap_RevaluationIncreaseDecreaseTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_ReversalOfImpairmentLossRecognisedInProfitOrLossTangibleAssets": [
+"CY",
+"PY"
+]
+}
+},
+"in-gaap_LoansAndAdvancesTable": {
+"in-gaap_ClassificationBasedOnTimePeriodAxis=in-gaap_ShortTermMember|in-gaap_ClassificationOfAssetsBasedOnSecurityAxis=in-gaap_UnsecuredConsideredGoodMember|in-gaap_ClassificationOfLoansAndAdvancesAxis=in-gaap_LoansAdvancesValueBeReceivedMember": {
+"in-gaap_AllowanceForBadAndDoubtfulLoansAndAdvances": [
+"CY",
+"PY"
+],
+"in-gaap_LoansAndAdvancesDueByDirectors": [
+"CY",
+"PY"
+],
+"in-gaap_LoansAndAdvancesDueByDirectorsOtherOfficersOrOthers": [
+"CY",
+"PY"
+],
+"in-gaap_LoansAndAdvancesDueByFirmsInWhichAnyDirectorIsPartner": [
+"CY",
+"PY"
+],
+"in-gaap_LoansAndAdvancesDueByFirmsOrCompaniesInWhichAnyDirectorIsPartnerOrDirector": [
+"CY",
+"PY"
+],
+"in-gaap_LoansAndAdvancesDueByOtherOfficers": [
+"CY",
+"PY"
+],
+"in-gaap_LoansAndAdvancesDueByOthers": [
+"CY",
+"PY"
+],
+"in-gaap_LoansAndAdvancesDueByPrivateCompaniesInWhichAnyDirectorIsDirector": [
+"CY",
+"PY"
+],
+"in-gaap_LoansAndAdvancesDueByPrivateCompaniesInWhichAnyDirectorIsMember": [
+"CY",
+"PY"
+]
+},
+"in-gaap_ClassificationBasedOnTimePeriodAxis=in-gaap_ShortTermMember|in-gaap_ClassificationOfAssetsBasedOnSecurityAxis=in-gaap_UnsecuredConsideredGoodMember|in-gaap_ClassificationOfLoansAndAdvancesAxis=in-gaap_OtherTaxesReceivableMember": {
+"in-gaap_AllowanceForBadAndDoubtfulLoansAndAdvances": [
+"CY",
+"PY"
+],
+"in-gaap_LoansAndAdvancesDueByDirectors": [
+"CY",
+"PY"
+],
+"in-gaap_LoansAndAdvancesDueByDirectorsOtherOfficersOrOthers": [
+"CY",
+"PY"
+],
+"in-gaap_LoansAndAdvancesDueByFirmsInWhichAnyDirectorIsPartner": [
+"CY",
+"PY"
+],
+"in-gaap_LoansAndAdvancesDueByFirmsOrCompaniesInWhichAnyDirectorIsPartnerOrDirector": [
+"CY",
+"PY"
+],
+"in-gaap_LoansAndAdvancesDueByOtherOfficers": [
+"CY",
+"PY"
+],
+"in-gaap_LoansAndAdvancesDueByOthers": [
+"CY",
+"PY"
+],
+"in-gaap_LoansAndAdvancesDueByPrivateCompaniesInWhichAnyDirectorIsDirector": [
+"CY",
+"PY"
+],
+"in-gaap_LoansAndAdvancesDueByPrivateCompaniesInWhichAnyDirectorIsMember": [
+"CY",
+"PY"
+]
+}
+},
+"in-gaap_StatementOfChangesInReservesTable": {
+"in-gaap_ComponentsOfReservesAxis=in-gaap_CapitalReserveConsolidationMember": {
+"in-gaap_AdditionsToReserves": [
+"CY"
+],
+"in-gaap_AppropriationTowardsBonusShares": [
+"CY",
+"PY"
+],
+"in-gaap_AppropriationsForDividendDividendTaxAndGeneralReserve": [
+"CY"
+],
+"in-gaap_ChangesInReserves": [
+"CY",
+"PY"
+],
+"in-gaap_DeductionsToReserves": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdditionsToReserves": [
+"CY"
+],
+"in-gaap_OtherAppropriations": [
+"CY",
+"PY"
+],
+"in-gaap_OtherDeductionsToReserves": [
+"CY",
+"PY"
+],
+"in-gaap_OtherUtilisationOfSecuritiesPremiumIfPermitted": [
+"CY",
+"PY"
+],
+"in-gaap_ProfitLossForPeriod": [
+"CY",
+"PY"
+],
+"in-gaap_Reserves": [
+"CY",
+"OPEN"
+],
+"in-gaap_TransferToGeneralReserve": [
+"CY"
+],
+"in-gaap_VenturersShareOfPostAcquisitionReservesOfJointlyControlledEnterprise": [
+"CY",
+"PY"
+]
+},
+"in-gaap_ComponentsOfReservesAxis=in-gaap_SurplusMember": {
+"in-gaap_AppropriationTowardsBonusShares": [
+"CY",
+"PY"
+],
+"in-gaap_AppropriationsForDividendDividendTaxAndGeneralReserve": [
+"CY",
+"PY"
+],
+"in-gaap_DeductionsToReserves": [
+"CY"
+],
+"in-gaap_DividendAppropriation": [
+"CY",
+"PY"
+],
+"in-gaap_DividendTaxAppropriation": [
+"CY",
+"PY"
+],
+"in-gaap_EquityDividendTaxAppropriation": [
+"CY",
+"PY"
+],
+"in-gaap_FinalDividendAppropriation": [
+"CY",
+"PY"
+],
+"in-gaap_FinalEquityDividendAppropriation": [
+"CY",
+"PY"
+],
+"in-gaap_FinalPreferredDividendAppropriation": [
+"CY",
+"PY"
+],
+"in-gaap_FinalSpecialDividendAppropriation": [
+"CY",
+"PY"
+],
+"in-gaap_InterimDividendAppropriation": [
+"CY",
+"PY"
+],
+"in-gaap_InterimEquityDividendAppropriation": [
+"CY",
+"PY"
+],
+"in-gaap_InterimPreferredDividendAppropriation": [
+"CY",
+"PY"
+],
+"in-gaap_InterimSpecialDividendAppropriation": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdditionsToReserves": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAppropriations": [
+"CY",
+"PY"
+],
+"in-gaap_OtherDeductionsToReserves": [
+"CY"
+],
+"in-gaap_OtherUtilisationOfSecuritiesPremiumIfPermitted": [
+"CY"
+],
+"in-gaap_PreferredDividendTaxAppropriation": [
+"CY",
+"PY"
+],
+"in-gaap_TransferToGeneralReserve": [
+"CY",
+"PY"
+],
+"in-gaap_VenturersShareOfPostAcquisitionReservesOfJointlyControlledEnterprise": [
+"CY",
+"PY"
+]
+}
+},
+"in-gaap_SubclassificationOfTradeReceivablesTable": {
+"in-gaap_ClassificationOfAssetsBasedOnSecurityAxis=in-gaap_UnsecuredConsideredGoodMember": {
+"in-gaap_AllowanceForBadAndDoubtfulDebts": [
+"CY",
+"PY"
+],
+"in-gaap_TradeReceivablesDueByDirectors": [
+"CY",
+"PY"
+],
+"in-gaap_TradeReceivablesDueByDirectorsOtherOfficersOrOthers": [
+"CY",
+"PY"
+],
+"in-gaap_TradeReceivablesDueByFirmsInWhichAnyDirectorIsPartner": [
+"CY",
+"PY"
+],
+"in-gaap_TradeReceivablesDueByFirmsOrCompaniesInWhichAnyDirectorIsPartnerOrDirector": [
+"CY",
+"PY"
+],
+"in-gaap_TradeReceivablesDueByOtherOfficers": [
+"CY",
+"PY"
+],
+"in-gaap_TradeReceivablesDueByOthers": [
+"PY"
+],
+"in-gaap_TradeReceivablesDueByPrivateCompaniesInWhichAnyDirectorIsDirector": [
+"CY",
+"PY"
+],
+"in-gaap_TradeReceivablesDueByPrivateCompaniesInWhichAnyDirectorIsMember": [
+"CY",
+"PY"
+]
+}
+}
+},
+"values": {
+"in-ca_AmountOfContributionsMadeToNationalDefenceFund": [
+"CY",
+"PY"
+],
+"in-ca_AmountOfReductionInCapitalDuringYear": [
+"CY"
+],
+"in-ca_AmountOfShareApplicationMoneyReceivedBackDuringYear": [
+"CY",
+"PY"
+],
+"in-ca_AmountOfShareApplicationMoneyRepaidReturnedBackDuringYear": [
+"CY",
+"PY"
+],
+"in-ca_BadDebtsOfRelatedPartiesAsPerAS18": [
+"CY",
+"PY"
+],
+"in-ca_CapitalExpenditureInForeignCurrency": [
+"CY",
+"PY"
+],
+"in-ca_DomesticSaleManufacturedGoods": [
+"CY",
+"PY"
+],
+"in-ca_DomesticSaleTradedGoods": [
+"CY",
+"PY"
+],
+"in-ca_DomesticTurnoverGoodsGross": [
+"CY",
+"PY"
+],
+"in-ca_ExportSaleManufacturedGoods": [
+"CY",
+"PY"
+],
+"in-ca_ExportSaleTradedGoods": [
+"CY",
+"PY"
+],
+"in-ca_ExportTurnoverGoodsGross": [
+"CY",
+"PY"
+],
+"in-ca_NumberOfOtherIssueOfSharesArisingOutOfConversionOfSecurities": [
+"CY",
+"PY"
+],
+"in-ca_NumberOfOtherIssuesOfShares": [
+"CY",
+"PY"
+],
+"in-ca_NumberOfPersonShareApplicationMoneyPaidAsAtEndOfYear": [
+"CY",
+"PY"
+],
+"in-ca_NumberOfPersonShareApplicationMoneyPaidDuringYear": [
+"CY",
+"PY"
+],
+"in-ca_NumberOfPersonShareApplicationMoneyReceivedAsAtEndOfYear": [
+"CY",
+"PY"
+],
+"in-ca_NumberOfPersonShareApplicationMoneyReceivedDuringYear": [
+"CY",
+"PY"
+],
+"in-ca_NumberOfSharesAllottedForContractsWithoutPaymentReceivedInCash": [
+"CY",
+"PY"
+],
+"in-ca_NumberOfSharesBoughtBack": [
+"CY"
+],
+"in-ca_NumberOfSharesIssuedAsBonusShares": [
+"CY",
+"PY"
+],
+"in-ca_NumberOfSharesIssuedAsOtherPreferentialAllotment": [
+"CY",
+"PY"
+],
+"in-ca_NumberOfSharesIssuedAsPreferentialAllotmentArisingOutOfConversionOfDebenturesPreferenceSharesDuringPeriod": [
+"CY",
+"PY"
+],
+"in-ca_NumberOfSharesIssuedAsRights": [
+"CY",
+"PY"
+],
+"in-ca_NumberOfSharesIssuedInOtherPrivatePlacement": [
+"CY",
+"PY"
+],
+"in-ca_NumberOfSharesIssuedInPrivatePlacementArisingOutOfConversionOfDebenturesPreferenceSharesDuringPeriod": [
+"CY",
+"PY"
+],
+"in-ca_NumberOfSharesIssuedInPublicOffering": [
+"CY",
+"PY"
+],
+"in-ca_NumberOfSharesIssuedUnderEmployeeStockOptionPlan": [
+"CY",
+"PY"
+],
+"in-ca_NumberOfSharesIssuedUnderSchemeOfAmalgamation": [
+"CY",
+"PY"
+],
+"in-ca_NumberOfWarrantsConvertedIntoDebenturesDuringPeriod": [
+"CY",
+"PY"
+],
+"in-ca_NumberOfWarrantsConvertedIntoEquitySharesDuringPeriod": [
+"CY",
+"PY"
+],
+"in-ca_NumberOfWarrantsConvertedIntoPreferenceSharesDuringPeriod": [
+"CY",
+"PY"
+],
+"in-ca_NumberOfWarrantsIssuedDuringPeriodINR": [
+"CY",
+"PY"
+],
+"in-ca_NumberOfWarrantsIssuedDuringPeriodInForeignCurrency": [
+"CY",
+"PY"
+],
+"in-ca_OtherDecreaseInNumberOfShares": [
+"CY",
+"PY"
+],
+"in-ca_PercentageOfCapitalReductionToCapitalPriorToReduction": [
+"CY"
+],
+"in-ca_ShareApplicationMoneyPaidDuringYear": [
+"CY",
+"PY"
+],
+"in-ca_ShareApplicationMoneyReceivedAndDueForRefund": [
+"CY",
+"PY"
+],
+"in-ca_ShareApplicationMoneyReceivedDuringYear": [
+"CY",
+"PY"
+],
+"in-ca_TaxEffectOfExceptionalItems": [
+"CY",
+"PY"
+],
+"in-ca_TaxEffectOfExtraordinaryItems": [
+"CY",
+"PY"
+],
+"in-gaap_AcquisitionsThroughBusinessCombinationsIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_AcquisitionsThroughBusinessCombinationsTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_AdditionalProvisionsOtherProvisions": [
+"CY",
+"PY"
+],
+"in-gaap_AdditionsOtherThanThroughBusinessCombinationsIntangibleAssets": [
+"CY"
+],
+"in-gaap_AdditionsThroughInternalDevelopment": [
+"CY",
+"PY"
+],
+"in-gaap_AdditionsToIntangibleAssets": [
+"CY"
+],
+"in-gaap_AdvertisingPromotionalExpenses": [
+"PY"
+],
+"in-gaap_AggregateAmountOfIncreaseInShareCapitalDuringPeriod": [
+"CY",
+"PY"
+],
+"in-gaap_AggregateAmountOfQuotedNoncurrentInvestments": [
+"CY",
+"PY"
+],
+"in-gaap_AggregateNumberOfFullyPaidUpSharesIssuedByWayOfBonusSharesDuringLastFiveYears": [
+"CY",
+"PY"
+],
+"in-gaap_AggregateNumberOfFullyPaidUpSharesIssuedPursuantToContractsWithoutPaymentBeingReceivedInCashDuringLastFiveYears": [
+"CY",
+"PY"
+],
+"in-gaap_AggregateNumberOfSharesBoughtBackDuringLastFiveYears": [
+"CY",
+"PY"
+],
+"in-gaap_AggregateNumberOfSharesIssuedDuringPeriod": [
+"CY",
+"PY"
+],
+"in-gaap_AggregateProvisionForDiminutionInValueOfNoncurrentInvestments": [
+"CY",
+"PY"
+],
+"in-gaap_AllowanceForBadAndDoubtfulDebts": [
+"CY",
+"PY"
+],
+"in-gaap_AmortisationExpense": [
+"CY",
+"PY"
+],
+"in-gaap_AmountOfBonusIssueDuringPeriod": [
+"CY",
+"PY"
+],
+"in-gaap_AmountOfDividendRemittedInForeignCurrency": [
+"CY",
+"PY"
+],
+"in-gaap_AmountOfDividendsProposedToBeDistributedToEquityShareholders": [
+"CY",
+"PY"
+],
+"in-gaap_AmountOfEmployeeStockOptionPlanIssuedDuringPeriod": [
+"CY",
+"PY"
+],
+"in-gaap_AmountOfIssueAllottedForContractsWithoutPaymentReceivedInCashDuringPeriod": [
+"CY",
+"PY"
+],
+"in-gaap_AmountOfIssueUnderSchemeOfAmalgamationDuringPeriod": [
+"CY",
+"PY"
+],
+"in-gaap_AmountOfOtherIssueArisingOutOfConversionOfSecuritiesDuringPeriod": [
+"CY",
+"PY"
+],
+"in-gaap_AmountOfOtherIssuesDuringPeriod": [
+"CY",
+"PY"
+],
+"in-gaap_AmountOfOtherPreferentialAllotmentIssueDuringPeriod": [
+"CY",
+"PY"
+],
+"in-gaap_AmountOfOtherPrivatePlacementIssueDuringPeriod": [
+"CY",
+"PY"
+],
+"in-gaap_AmountOfPerShareDividendProposedToBeDistributedToEquityShareholders": [
+"CY",
+"PY"
+],
+"in-gaap_AmountOfPreferentialAllotmentIssueArisingOutOfConversionOfDebenturesPreferenceSharesDuringPeriod": [
+"CY",
+"PY"
+],
+"in-gaap_AmountOfPrivatePlacementIssueArisingOutOfConversionOfDebenturesPreferenceSharesDuringPeriod": [
+"CY",
+"PY"
+],
+"in-gaap_AmountOfPublicIssueDuringPeriod": [
+"CY",
+"PY"
+],
+"in-gaap_AmountOfRevenueReceivedInForeignCurrencyFromServices": [
+"CY",
+"PY"
+],
+"in-gaap_AmountOfRightsIssueDuringPeriod": [
+"CY",
+"PY"
+],
+"in-gaap_AmountOfSharesReservedForIssueUnderOptionsAndContractsOrCommitmentsForSaleOfSharesOrDisinvestment": [
+"CY",
+"PY"
+],
+"in-gaap_AmountSpentOnConstructionOrAcquisitionOfAnyAsset": [
+"CY"
+],
+"in-gaap_AmountSpentOnConstructionOrAcquisitionOfAnyAssetInCash": [
+"CY"
+],
+"in-gaap_AmountSpentOnConstructionOrAcquisitionOfAnyAssetYetToBePaidInCash": [
+"CY"
+],
+"in-gaap_AmountSpentOnPurposesOtherThanConstructionOrAcquisitionOfAnyAsset": [
+"CY"
+],
+"in-gaap_AmountSpentOnPurposesOtherThanConstructionOrAcquisitionOfAnyAssetInCash": [
+"CY"
+],
+"in-gaap_AmountSpentOnPurposesOtherThanConstructionOrAcquisitionOfAnyAssetYetToBePaidInCash": [
+"CY"
+],
+"in-gaap_AmountUnspentCSR": [
+"CY"
+],
+"in-gaap_ApplicationMoneyReceivedForAllotmentOfSecuritiesAndDueForRefundAndInterestAccruedThereon": [
+"CY",
+"PY"
+],
+"in-gaap_ApplicationMoneyReceivedForAllotmentOfSecuritiesAndDueForRefundInterestAccrued": [
+"CY",
+"PY"
+],
+"in-gaap_ApplicationMoneyReceivedForAllotmentOfSecuritiesAndDueForRefundPrincipal": [
+"CY",
+"PY"
+],
+"in-gaap_AppropriationTowardsBonusShares": [
+"CY",
+"PY"
+],
+"in-gaap_AppropriationsForDividendDividendTaxAndGeneralReserve": [
+"CY"
+],
+"in-gaap_AttachmentOfPropertyOfEnterprise": [
+"CY",
+"PY"
+],
+"in-gaap_BadDebtsAdvancesWrittenOff": [
+"CY",
+"PY"
+],
+"in-gaap_BalancesHeldWithBanksToExtentHeldAgainstOtherCommitments": [
+"CY",
+"PY"
+],
+"in-gaap_BalancesHeldWithBanksToExtentHeldAsGuarantees": [
+"CY",
+"PY"
+],
+"in-gaap_BalancesHeldWithBanksToExtentHeldAsMarginMoney": [
+"CY",
+"PY"
+],
+"in-gaap_BalancesHeldWithBanksToExtentHeldAsMarginMoneyOrSecurityAgainstBorrowingsGuaranteesOrOtherCommitments": [
+"CY",
+"PY"
+],
+"in-gaap_BalancesHeldWithBanksToExtentHeldAsSecurityAgainstBorrowings": [
+"CY",
+"PY"
+],
+"in-gaap_BankAndFinanceChargesInForeignCurrency": [
+"CY",
+"PY"
+],
+"in-gaap_BasicEarningPerEquityShare": [
+"CY",
+"PY"
+],
+"in-gaap_BasicEarningPerEquityShareBeforeExtraordinaryItems": [
+"CY",
+"PY"
+],
+"in-gaap_BooksPeriodicals": [
+"CY"
+],
+"in-gaap_CSRExpenditureProvision": [
+"CY",
+"PY"
+],
+"in-gaap_CallsUnpaid": [
+"CY",
+"PY"
+],
+"in-gaap_CallsUnpaidByDirectors": [
+"CY",
+"PY"
+],
+"in-gaap_CallsUnpaidByDirectorsAndOfficers": [
+"CY",
+"PY"
+],
+"in-gaap_CallsUnpaidByOfficers": [
+"CY",
+"PY"
+],
+"in-gaap_CallsUnpaidByOthers": [
+"CY",
+"PY"
+],
+"in-gaap_CapitalSubsidiesOrGrantsReceivedFromGovernmentAuthorities": [
+"CY",
+"PY"
+],
+"in-gaap_CashAdvancesAndLoansMadeToOtherPartiesClassifiedAsInvestingActivities": [
+"CY",
+"PY"
+],
+"in-gaap_CashOnHand": [
+"CY"
+],
+"in-gaap_CashPaymentsForFutureContractsForwardContractsOptionContractsAndSwapContractsClassifiedAsInvestingActivities": [
+"CY",
+"PY"
+],
+"in-gaap_CashReceiptsFromFutureContractsForwardContractsOptionContractsAndSwapContractsClassifiedAsInvestingActivities": [
+"CY",
+"PY"
+],
+"in-gaap_CashReceiptsFromRepaymentOfAdvancesAndLoansMadeToOtherPartiesClassifiedAsInvestingActivities": [
+"CY",
+"PY"
+],
+"in-gaap_ChangesInIntangibleAssets": [
+"PY"
+],
+"in-gaap_ChangesInInventoriesOfFinishedGoods": [
+"CY",
+"PY"
+],
+"in-gaap_ChangesInInventoriesOfFinishedGoodsWorkInProgressAndStockInTrade": [
+"CY",
+"PY"
+],
+"in-gaap_ChangesInInventoriesOfStockInTrade": [
+"CY",
+"PY"
+],
+"in-gaap_ChangesInInventoriesOfWorkInProgress": [
+"CY",
+"PY"
+],
+"in-gaap_ChangesInOtherInventories": [
+"CY",
+"PY"
+],
+"in-gaap_ChangesInOtherProvisions": [
+"CY",
+"PY"
+],
+"in-gaap_CommissionBrokerageAndDiscountChargesInForeignCurrency": [
+"CY",
+"PY"
+],
+"in-gaap_ConsumptionOfStoresAndSpareParts": [
+"CY",
+"PY"
+],
+"in-gaap_CostIncurredByHoldingCompanyForIssuingOptionsOrSharesUnderEmployeeStockOptionOrStockPurchaseScheme": [
+"CY",
+"PY"
+],
+"in-gaap_CostReimbursedBySubsidiaryCompanyForIssuingOptionsOrSharesUnderEmployeeStockOptionOrStockPurchaseScheme": [
+"CY",
+"PY"
+],
+"in-gaap_CurrentInvestments": [
+"CY",
+"PY"
+],
+"in-gaap_CurrentLiabilitiesPortionOfShareApplicationMoneyPendingAllotment": [
+"CY",
+"PY"
+],
+"in-gaap_DebenturesClaimedButNotPaid": [
+"CY",
+"PY"
+],
+"in-gaap_DecreaseInAmountOfSharesBoughtBack": [
+"CY"
+],
+"in-gaap_DecreaseInNumberOfSharesDuringPeriod": [
+"CY"
+],
+"in-gaap_DecreaseInShareCapitalDuringPeriod": [
+"CY"
+],
+"in-gaap_DeductionsToReserves": [
+"CY"
+],
+"in-gaap_DeferredTaxLiabilitiesNet": [
+"CY",
+"PY"
+],
+"in-gaap_DepletionExpense": [
+"CY",
+"PY"
+],
+"in-gaap_DepositsAcceptedOrRenewedDuringPeriod": [
+"CY",
+"PY"
+],
+"in-gaap_DepositsMaturedAndClaimedButNotPaid": [
+"CY",
+"PY"
+],
+"in-gaap_DepositsMaturedAndClaimedButNotPaidDuringPeriod": [
+"CY",
+"PY"
+],
+"in-gaap_DepositsMaturedButNotClaimed": [
+"CY",
+"PY"
+],
+"in-gaap_DilutedEarningsPerEquityShare": [
+"CY",
+"PY"
+],
+"in-gaap_DilutedEarningsPerEquityShareBeforeExtraordinaryItems": [
+"CY",
+"PY"
+],
+"in-gaap_DirectorsSittingFees": [
+"CY",
+"PY"
+],
+"in-gaap_DisposalsIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_DisposalsIntangibleAssetsOthers": [
+"CY",
+"PY"
+],
+"in-gaap_DisposalsIntangibleAssetsThroughDemergers": [
+"CY",
+"PY"
+],
+"in-gaap_DisposalsTangibleAssetsThroughDemergers": [
+"CY",
+"PY"
+],
+"in-gaap_DividendAppropriation": [
+"CY",
+"PY"
+],
+"in-gaap_DividendIncome": [
+"CY",
+"PY"
+],
+"in-gaap_DividendIncomeLongTermInvestments": [
+"CY",
+"PY"
+],
+"in-gaap_DividendIncomeLongTermInvestmentsFromOthers": [
+"CY",
+"PY"
+],
+"in-gaap_DividendTaxAppropriation": [
+"CY",
+"PY"
+],
+"in-gaap_DividendsReceivedClassifiedAsInvestingActivities": [
+"CY",
+"PY"
+],
+"in-gaap_EarningsOnDividend": [
+"CY",
+"PY"
+],
+"in-gaap_EarningsOnInterest": [
+"CY",
+"PY"
+],
+"in-gaap_EarningsOnInterestAndDividend": [
+"CY",
+"PY"
+],
+"in-gaap_EarningsOnKnowhow": [
+"CY",
+"PY"
+],
+"in-gaap_EarningsOnProfessionalAndConsultationFees": [
+"CY",
+"PY"
+],
+"in-gaap_EarningsOnRoyalty": [
+"CY",
+"PY"
+],
+"in-gaap_EarningsOnRoyaltyKnowhowProfessionalAndConsultationFees": [
+"CY",
+"PY"
+],
+"in-gaap_Earthquake": [
+"CY",
+"PY"
+],
+"in-gaap_EquityDividendTaxAppropriation": [
+"CY",
+"PY"
+],
+"in-gaap_ExceptionalAndExtraordinaryItems": [
+"CY",
+"PY"
+],
+"in-gaap_ExceptionalItems": [
+"CY",
+"PY"
+],
+"in-gaap_ExceptionalItemsBeforeTax": [
+"CY",
+"PY"
+],
+"in-gaap_ExciseDuty": [
+"CY",
+"PY"
+],
+"in-gaap_ExpenditureOnDividendPaid": [
+"CY",
+"PY"
+],
+"in-gaap_ExtraordinaryItems": [
+"CY",
+"PY"
+],
+"in-gaap_ExtraordinaryItemsBeforeTax": [
+"CY",
+"PY"
+],
+"in-gaap_FOBValueOfManufacturedGoodsExported": [
+"CY",
+"PY"
+],
+"in-gaap_FinalDividendAppropriation": [
+"CY",
+"PY"
+],
+"in-gaap_FinalDividendRemittedInForeignCurrency": [
+"CY",
+"PY"
+],
+"in-gaap_FinalEquityDividendAppropriation": [
+"CY",
+"PY"
+],
+"in-gaap_FinalPreferredDividendAppropriation": [
+"CY",
+"PY"
+],
+"in-gaap_FinalSpecialDividendAppropriation": [
+"CY",
+"PY"
+],
+"in-gaap_FixedDepositsWithBanks": [
+"CY",
+"PY"
+],
+"in-gaap_ForeignTax": [
+"CY",
+"PY"
+],
+"in-gaap_ForfeitedShares": [
+"CY",
+"PY"
+],
+"in-gaap_ForfeitedSharesReissued": [
+"CY",
+"PY"
+],
+"in-gaap_ImpairmentLossRecognisedInProfitOrLossIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_ImpairmentLossRecognisedInProfitOrLossTangibleAssets": [
+"PY"
+],
+"in-gaap_IncomeTaxesPaidRefundClassifiedAsInvestingActivities": [
+"CY",
+"PY"
+],
+"in-gaap_IncreaseDecreaseInNumberOfSharesOutstanding": [
+"CY"
+],
+"in-gaap_IncreaseDecreaseInShareCapital": [
+"CY"
+],
+"in-gaap_IncreaseDecreaseThroughNetExchangeDifferencesIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_IncreaseDecreaseThroughNetExchangeDifferencesTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_IncreaseInExistingOtherProvisions": [
+"CY",
+"PY"
+],
+"in-gaap_InsuranceAndFreightOnExports": [
+"CY",
+"PY"
+],
+"in-gaap_InsuranceChargesInForeignCurrency": [
+"CY",
+"PY"
+],
+"in-gaap_IntangibleAssetChargesInForeignCurrency": [
+"CY",
+"PY"
+],
+"in-gaap_IntangibleAssetsUnderDevelopmentOrWorkInProgress": [
+"CY",
+"PY"
+],
+"in-gaap_InterestAccruedAndDueOnBorrowings": [
+"CY",
+"PY"
+],
+"in-gaap_InterestAccruedAndDueOnPublicDeposits": [
+"CY",
+"PY"
+],
+"in-gaap_InterestAccruedButNotDueOnBorrowings": [
+"CY",
+"PY"
+],
+"in-gaap_InterestAccruedButNotDueOnPublicDeposits": [
+"CY",
+"PY"
+],
+"in-gaap_InterestOnDepositsAccruedAndDueButNotPaid": [
+"CY",
+"PY"
+],
+"in-gaap_InterestReceivedClassifiedAsInvestingActivities": [
+"CY",
+"PY"
+],
+"in-gaap_InterestUnclaimedAmount": [
+"CY",
+"PY"
+],
+"in-gaap_InterimDividendAppropriation": [
+"CY",
+"PY"
+],
+"in-gaap_InterimDividendRemittedInForeignCurrency": [
+"CY",
+"PY"
+],
+"in-gaap_InterimEquityDividendAppropriation": [
+"CY",
+"PY"
+],
+"in-gaap_InterimPreferredDividendAppropriation": [
+"CY",
+"PY"
+],
+"in-gaap_InterimSpecialDividendAppropriation": [
+"CY",
+"PY"
+],
+"in-gaap_Inventories": [
+"CY",
+"PY"
+],
+"in-gaap_LogisticChargeInForeignCurrency": [
+"CY",
+"PY"
+],
+"in-gaap_LongTermBorrowings": [
+"CY",
+"PY"
+],
+"in-gaap_LongTermLoansAndAdvances": [
+"CY",
+"PY"
+],
+"in-gaap_LossOnDisposalDiscardDemolishmentAndDestructionOfDepreciableTangibleAsset": [
+"PY"
+],
+"in-gaap_LossOnDisposalOfIntangibleAsset": [
+"CY",
+"PY"
+],
+"in-gaap_MarketValueOfQuotedNoncurrentInvestments": [
+"CY",
+"PY"
+],
+"in-gaap_MeetingExpensesInForeignCurrency": [
+"CY",
+"PY"
+],
+"in-gaap_MembershipAndSubscriptionExpensesInForeignCurrency": [
+"CY",
+"PY"
+],
+"in-gaap_MiscellaneousExpenditureWrittenOff": [
+"CY",
+"PY"
+],
+"in-gaap_NumberOfSharesOutstanding": [
+"CY",
+"OPEN",
+"PY"
+],
+"in-gaap_NumberOfSharesProposedToBeIssued": [
+"CY",
+"PY"
+],
+"in-gaap_NumberOfSharesSubscribedButNotFullyPaid": [
+"CY",
+"PY"
+],
+"in-gaap_OriginalPaidUpValueOfForfeitedShares": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdditionsToReserves": [
+"CY"
+],
+"in-gaap_OtherAdjustmentsIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsIntangibleAssetsOthers": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAdjustmentsTangibleAssetsOthers": [
+"CY",
+"PY"
+],
+"in-gaap_OtherAppropriations": [
+"CY",
+"PY"
+],
+"in-gaap_OtherDecreaseInAmountOfShares": [
+"CY",
+"PY"
+],
+"in-gaap_OtherDeductionsToReserves": [
+"CY"
+],
+"in-gaap_OtherDutiesTaxesCollected": [
+"CY",
+"PY"
+],
+"in-gaap_OtherInflowsOutflowsOfCashClassifiedAsFinancingActivities": [
+"CY"
+],
+"in-gaap_OtherInflowsOutflowsOfCashClassifiedAsInvestingActivities": [
+"CY",
+"PY"
+],
+"in-gaap_OtherItemsExtraordinary": [
+"CY",
+"PY"
+],
+"in-gaap_OtherLongTermLiabilities": [
+"CY",
+"PY"
+],
+"in-gaap_OtherMiscellaneousExpenditureWrittenOff": [
+"CY",
+"PY"
+],
+"in-gaap_OtherOperatingRevenues": [
+"CY",
+"PY"
+],
+"in-gaap_OtherPayablesCurrent": [
+"CY",
+"PY"
+],
+"in-gaap_OtherProvisions": [
+"CY",
+"OPEN",
+"PY"
+],
+"in-gaap_OtherUtilisationOfSecuritiesPremiumIfPermitted": [
+"CY"
+],
+"in-gaap_PaymentForCompanyLawMatters": [
+"PY"
+],
+"in-gaap_PaymentForExtraordinaryItemsClassifiedAsInvestingActivities": [
+"CY",
+"PY"
+],
+"in-gaap_PowerAndFuel": [
+"CY",
+"PY"
+],
+"in-gaap_PreTaxGainOrLossRecognisedOnDisposalOfAssetsOrSettlementOfLiabilitiesAttributableToDiscontinuingOperations": [
+"CY",
+"PY"
+],
+"in-gaap_PreferredDividendTaxAppropriation": [
+"CY",
+"PY"
+],
+"in-gaap_PriorPeriodItemsBeforeTax": [
+"CY",
+"PY"
+],
+"in-gaap_ProceedsFromExtraordinaryItemsClassifiedAsInvestingActivities": [
+"CY",
+"PY"
+],
+"in-gaap_ProceedsFromGovernmentGrantsClassifiedAsInvestingActivities": [
+"CY",
+"PY"
+],
+"in-gaap_ProceedsFromSalesOfIntangibleAssetsClassifiedAsInvestingActivities": [
+"CY",
+"PY"
+],
+"in-gaap_ProfessionalChargesInForeignCurrency": [
+"CY",
+"PY"
+],
+"in-gaap_ProfitInForeignCurrencyOnSaleOfAssets": [
+"CY",
+"PY"
+],
+"in-gaap_ProfitLossFromDiscontinuingOperationAfterTax": [
+"CY",
+"PY"
+],
+"in-gaap_ProfitLossFromDiscontinuingOperationsBeforeTax": [
+"CY",
+"PY"
+],
+"in-gaap_ProfitLossOfMinorityInterest": [
+"CY",
+"PY"
+],
+"in-gaap_ProfitsOrLossesFromPartnershipFirmsOrAssociationOfPersonsOrLimitedLiabilityPartnerships": [
+"CY",
+"PY"
+],
+"in-gaap_ProvisionBadDoubtfulDebtsCreated": [
+"CY",
+"PY"
+],
+"in-gaap_ProvisionBadDoubtfulLoansAdvancesCreated": [
+"CY",
+"PY"
+],
+"in-gaap_ProvisionEmployeeInsuranceScheme": [
+"CY",
+"PY"
+],
+"in-gaap_ProvisionForAbandonmentCost": [
+"CY",
+"PY"
+],
+"in-gaap_ProvisionForCorporateDividendTax": [
+"CY",
+"PY"
+],
+"in-gaap_ProvisionForCorporateTax": [
+"CY",
+"PY"
+],
+"in-gaap_ProvisionForCurrentTax": [
+"CY",
+"PY"
+],
+"in-gaap_ProvisionForFringeBenefitTax": [
+"CY",
+"PY"
+],
+"in-gaap_ProvisionForOtherTax": [
+"CY",
+"PY"
+],
+"in-gaap_ProvisionForProposedDividend": [
+"CY",
+"PY"
+],
+"in-gaap_ProvisionForProposedEquityDividend": [
+"CY",
+"PY"
+],
+"in-gaap_ProvisionForProposedEquityFinalDividend": [
+"CY",
+"PY"
+],
+"in-gaap_ProvisionForProposedEquityInterimDividend": [
+"CY",
+"PY"
+],
+"in-gaap_ProvisionForProposedEquitySpecialDividend": [
+"CY",
+"PY"
+],
+"in-gaap_ProvisionForProposedPreferenceDividend": [
+"CY",
+"PY"
+],
+"in-gaap_ProvisionForProposedPreferenceFinalDividend": [
+"CY",
+"PY"
+],
+"in-gaap_ProvisionForProposedPreferenceInterimDividend": [
+"CY",
+"PY"
+],
+"in-gaap_ProvisionForProposedPreferenceSpecialDividend": [
+"CY",
+"PY"
+],
+"in-gaap_ProvisionForStatutoryLiabilities": [
+"CY",
+"PY"
+],
+"in-gaap_ProvisionForWealthTax": [
+"CY",
+"PY"
+],
+"in-gaap_ProvisionLeaveEncashment": [
+"CY",
+"PY"
+],
+"in-gaap_ProvisionOtherEmployeeRelatedLiabilities": [
+"CY",
+"PY"
+],
+"in-gaap_ProvisionPension": [
+"CY",
+"PY"
+],
+"in-gaap_ProvisionUsedOtherProvisions": [
+"CY",
+"PY"
+],
+"in-gaap_PublicDepositPayableCurrent": [
+"CY",
+"PY"
+],
+"in-gaap_PurchaseOfIntangibleAssetsClassifiedAsInvestingActivities": [
+"CY",
+"PY"
+],
+"in-gaap_ResearchAndDevelopmentExpensesInForeignCurrency": [
+"CY",
+"PY"
+],
+"in-gaap_RetirementsOfIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_RevaluationIncreaseDecreaseIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_RevaluationIncreaseDecreaseTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_RevenueFromInterest": [
+"CY",
+"PY"
+],
+"in-gaap_RevenueFromOperationsFinanceCompany": [
+"CY",
+"PY"
+],
+"in-gaap_RevenueFromOtherFinancialServices": [
+"CY",
+"PY"
+],
+"in-gaap_RevenueFromSaleOfProducts": [
+"CY",
+"PY"
+],
+"in-gaap_RevenueSubsidiesOrGrantsReceivedFromGovernmentAuthorities": [
+"CY",
+"PY"
+],
+"in-gaap_ReversalOfImpairmentLossRecognisedInProfitOrLossIntangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_ReversalOfImpairmentLossRecognisedInProfitOrLossTangibleAssets": [
+"CY",
+"PY"
+],
+"in-gaap_SalesMarketingAndAdvertisingExpensesInForeignCurrency": [
+"CY",
+"PY"
+],
+"in-gaap_ServiceTaxCollected": [
+"CY",
+"PY"
+],
+"in-gaap_ShareApplicationMoneyPendingAllotment": [
+"CY",
+"PY"
+],
+"in-gaap_ShareCapital": [
+"OPEN"
+],
+"in-gaap_ShareChangesInInventoriesOfFinishedGoodsWorkInProgressAndStockInTradeJointVentures": [
+"CY",
+"PY"
+],
+"in-gaap_ShareCostOfMaterialsConsumedJointVentures": [
+"CY",
+"PY"
+],
+"in-gaap_ShareDepreciationAndAmortisationExpenseJointVentures": [
+"CY",
+"PY"
+],
+"in-gaap_ShareNoncurrentInvestmentsJointVentures": [
+"CY",
+"PY"
+],
+"in-gaap_ShareOfProfitLossOfAssociates": [
+"CY",
+"PY"
+],
+"in-gaap_ShareOtherExpensesJointVentures": [
+"CY",
+"PY"
+],
+"in-gaap_SharePremiumForSharesToBeAllotted": [
+"CY",
+"PY"
+],
+"in-gaap_SharePurchasesOfStockInTradeJointVentures": [
+"CY",
+"PY"
+],
+"in-gaap_SharesInCompanyHeldByAssociatesOfItsHoldingCompany": [
+"CY",
+"PY"
+],
+"in-gaap_SharesInCompanyHeldByAssociatesOfItsUltimateHoldingCompany": [
+"CY",
+"PY"
+],
+"in-gaap_SharesInCompanyHeldByHoldingCompany": [
+"CY",
+"PY"
+],
+"in-gaap_SharesInCompanyHeldByHoldingCompanyOrUltimateHoldingCompanyOrByItsSubsidiariesOrAssociates": [
+"CY",
+"PY"
+],
+"in-gaap_SharesInCompanyHeldBySubsidiariesOfItsHoldingCompany": [
+"CY",
+"PY"
+],
+"in-gaap_SharesInCompanyHeldBySubsidiariesOfItsUltimateHoldingCompany": [
+"CY",
+"PY"
+],
+"in-gaap_SharesInCompanyHeldByUltimateHoldingCompany": [
+"CY",
+"PY"
+],
+"in-gaap_SharesReservedForIssueUnderOptionsAndContractsOrCommitmentsForSaleOfSharesOrDisinvestment": [
+"CY",
+"PY"
+],
+"in-gaap_ShortTermBorrowings": [
+"PY"
+],
+"in-gaap_ShortTermProvisions": [
+"CY",
+"PY"
+],
+"in-gaap_SpecialDividendRemittedInForeignCurrency": [
+"CY",
+"PY"
+],
+"in-gaap_TangibleAssetsCapitalWorkInProgress": [
+"CY",
+"PY"
+],
+"in-gaap_TaxExpenseOfDiscontinuingOperations": [
+"CY",
+"PY"
+],
+"in-gaap_TelecommunicationExpensesInForeignCurrency": [
+"CY",
+"PY"
+],
+"in-gaap_TotalNumberOfNonResidentShareholders": [
+"CY",
+"PY"
+],
+"in-gaap_TotalNumberOfSharesHeldByNonResidentShareholdersOnWhichDividendsWereDue": [
+"CY",
+"PY"
+],
+"in-gaap_TradePayablesLongTerm": [
+"CY",
+"PY"
+],
+"in-gaap_TransferToGeneralReserve": [
+"CY"
+],
+"in-gaap_UnclaimedMaturedDebentures": [
+"CY",
+"PY"
+],
+"in-gaap_UnclaimedMaturedDeposits": [
+"CY",
+"PY"
+],
+"in-gaap_UnclaimedShareApplicationRefundMoney": [
+"CY",
+"PY"
+],
+"in-gaap_UnpaidDividends": [
+"CY",
+"PY"
+],
+"in-gaap_UnpaidMaturedDebenturesAndInterestAccruedThereon": [
+"CY",
+"PY"
+],
+"in-gaap_UnpaidMaturedDepositsAndInterestAccruedThereon": [
+"CY",
+"PY"
+],
+"in-gaap_UnusedProvisionReversedOtherProvisions": [
+"CY",
+"PY"
+],
+"in-gaap_ValueOfSharesSubscribedButNotFullyPaid": [
+"CY",
+"PY"
+],
+"in-gaap_VenturersShareOfPostAcquisitionReservesOfJointlyControlledEnterprise": [
+"CY",
+"PY"
+]
+}
+}
