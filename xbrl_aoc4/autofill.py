@@ -397,8 +397,11 @@ def zero_fill_like_taxprint(f: Filing, schema) -> list[str]:
     has_py = bool(f.py_end)
     items = {it["id"]: it for sec in schema.sections for it in sec["items"]}
     for eid, pks in zmap.get("values", {}).items():
+        # MCA wants both years once one is given
         if "CY" in pks and "PY" not in pks and not items.get(eid, {}).get("noPY"):
-            pks = pks + ["PY"]  # MCA wants both years once one is given
+            pks = pks + ["PY"]
+        if "PY" in pks and "CY" not in pks and not items.get(eid, {}).get("noCY"):
+            pks = ["CY"] + pks
         for pk in pks:
             if pk == "PY" and not has_py or not ok(eid, pk):
                 continue
