@@ -15,6 +15,7 @@ from tools.compare_instances import compare  # noqa: E402
 from xbrl_aoc4.generator import generate  # noqa: E402
 from xbrl_aoc4.importers.instance_reader import read_instance  # noqa: E402
 from xbrl_aoc4.model import Filing  # noqa: E402
+from xbrl_aoc4.schema_loader import load_schema  # noqa: E402
 from xbrl_aoc4.validator import validate  # noqa: E402
 
 
@@ -313,3 +314,79 @@ if __name__ == "__main__":
         if name.startswith("test_"):
             fn()
             print("ok", name)
+
+
+def _codes(res):
+    return [(i["code"], i["element"].split("_", 1)[-1], i["period"], i["table"].split("_", 1)[-1]) for i in res.items]
+
+
+def test_indas_mca_business_rules():
+    """MCA's Ind AS business rules (schema/mca_rules_INDAS.json) replace the template's older copy."""
+    from xbrl_aoc4.mca_rules import has_rules, summary
+    assert has_rules("INDAS") and not has_rules("AS")
+    s = summary("INDAS")
+    assert s["element_rules"] > 800 and s["checked"] > 700 and s["generic"] == 16
+
+    f = make_filing("INDAS")
+    codes = _codes(validate(f))
+    # unconditional mandatory amounts, both years
+    assert ("MANDATORY", "Inventories", "CY", "") in codes and ("MANDATORY", "Inventories", "PY", "") in codes
+    # table needed because the balance sheet amount is not zero
+    assert any(c[0] == "TABLE" and c[3] == "DisclosureOfPropertyPlantAndEquipmentTable" for c in codes)
+    # no investment property: its note's mandatory fields don't apply
+    assert not any(c[1] == "DepreciationMethodInvestmentPropertyCostModel" for c in codes)
+
+    # Yes in a 'Whether' field makes its table mandatory
+    f.set_value("ind-as_WhetherThereAreAnyContingentLiabilities", "CY", "Yes")
+    assert any(c[0] == "TABLE" and c[3] == "DisclosureOfContingentLiabilitiesTable" for c in _codes(validate(f)))
+
+    # generic rule 1: a total with no components
+    f.set_value("ind-as_NoncurrentFinancialAssets", "CY", "500")
+    assert ("MCA-PARENT-CHILD", "NoncurrentFinancialAssets", "CY", "") in _codes(validate(f))
+
+    # generic rule 6: closing = opening + change
+    f.set_value("ind-as_CashAndCashEquivalentsCashFlowStatement", "PY", "100")
+    f.set_value("ind-as_IncreaseDecreaseInCashAndCashEquivalents", "CY", "50")
+    f.set_value("ind-as_CashAndCashEquivalentsCashFlowStatement", "CY", "160")
+    assert ("MCA-OPEN-CLOSE", "CashAndCashEquivalentsCashFlowStatement", "CY", "") in _codes(validate(f))
+    f.set_value("ind-as_CashAndCashEquivalentsCashFlowStatement", "CY", "150")
+    assert not any(c[0] == "MCA-OPEN-CLOSE" for c in _codes(validate(f)))
+
+    # generic rule 7: at most 2 decimals; element rule: non-negative
+    f.set_value("ind-as_TradePayablesCurrent", "CY", "100.125")
+    f.set_value("ind-as_CashOnHand", "CY", "-5")
+    codes = _codes(validate(f))
+    assert ("MCA-DECIMALS", "TradePayablesCurrent", "CY", "") in codes
+    assert ("MCA-NONNEG", "CashOnHand", "CY", "") in codes
+
+    # generic rule 3: numbered members in order; rule 2: mandatory line items
+    t = "ind-as_DisclosureOfClassesOfEquityShareCapitalTable"
+    ax = load_schema("INDAS").tables[t]["axes"][0]["id"]
+    f.table_row(t, {ax: "ind-as_EquityShares1Member"})["values"]["ind-as_NumberOfSharesAuthorised"] = {"CY": "10"}
+    f.table_row(t, {ax: "ind-as_EquityShares3Member"})["values"]["ind-as_NumberOfSharesAuthorised"] = {"CY": "10"}
+    codes = _codes(validate(f))
+    assert any(c[0] == "MCA-SEQUENCE" for c in codes)
+    assert any(c[0] == "TABLE" and c[1] == "ValueOfSharesAuthorised" for c in codes)
+
+    # generic rule 11: no previous year for the auditor's report
+    f.set_value("in-ca_NameOfAuditFirm" if load_schema("INDAS").element("in-ca_NameOfAuditFirm") else "in-ca_DisclosureInAuditorsReportExplanatory", "PY", "x")
+    assert any(c[0] == "MCA-NO-PY" for c in _codes(validate(f)))
+
+
+def test_indas_zero_fill_clears_mandatory_amounts():
+    from xbrl_aoc4.autofill import zero_blank_mandatory_amounts
+    f = make_filing("INDAS")
+    schema = load_schema("INDAS")
+    zero_blank_mandatory_amounts(f, schema, validate(f))
+    left = [i for i in validate(f).errors if i["code"] == "MANDATORY"
+            and (schema.element(i["element"]) or {}).get("type") == "monetaryItemType"]
+    assert not left, left[:3]
+
+
+def test_indas_output_leaves_out_facts_mca_has_no_place_for():
+    f = make_filing("INDAS")
+    f.set_value("in-ca_DisclosureInAuditorsReportExplanatory", "CY", "Unmodified opinion")
+    f.set_value("in-ca_DisclosureInAuditorsReportExplanatory", "PY", "Last year's opinion")
+    xml, warns = generate(f)
+    assert "Unmodified opinion" in xml and "Last year" not in xml
+    assert any("left out of the XML" in w for w in warns)
