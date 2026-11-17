@@ -65,6 +65,34 @@ On other systems: `pip install -r requirements.txt` then `python run.py`.
 - Totals: every total in the template (205 formulas non-Ind AS, 261 Ind AS)
   must equal the sum of its components, and the balance sheet must balance.
 
+### Ind AS: MCA's official business rules
+
+For Ind AS the template's rules are replaced by MCA's own workbook,
+"Business Rules for IndAS Taxonomy V1.2" (imported into
+`schema/mca_rules_INDAS.json`):
+
+- 812 element rules, of which 796 are checked automatically: mandatory
+  fields, fields and tables required when a Yes/No answer is Yes or when a
+  balance sheet amount is not zero, non-negative amounts, PAN / CIN / DIN /
+  ITC formats, MCA's country and currency lists, dates not in the future,
+  unique values, carrying amount = gross less accumulated depreciation,
+  totals of "others" tables equal to the face amount, and more. 41 of them
+  need MCA's own records (name matches the CIN or DIN, auditor on the ICAI
+  list), so they can only be checked on the MCA portal.
+- The generic rules: a total needs at least one component (with MCA's
+  exemptions), mandatory line items in each table column, numbered members in
+  order, no images, previous-year amounts, closing = opening + change,
+  at most 2 decimals, sections that don't apply to standalone / consolidated
+  reports or have no previous year (left out of the XML), a member on every
+  axis, and the opening balance sheet for first-time adopters.
+- The notes of an asset (property, plant and equipment, investment property,
+  goodwill, intangible and biological assets, borrowings, investments) are
+  only required when the balance sheet shows that asset.
+
+When MCA publishes a new version of the workbook, run
+`python -m tools.import_business_rules "<workbook>.xlsx" INDAS --report`;
+`--report` lists the rules whose wording was not understood.
+
 ## Accuracy check
 
 `tools/compare_instances.py` compares two instances fact by fact (concept,
@@ -113,7 +141,9 @@ xbrl_aoc4/
   schema/INDAS.json       drop-down lists (built from the InstantXBRL templates)
   schema/periods_AS.json  period types learned from real instances
   generator.py            XML writer (contexts, dimensions, units, facts)
+  schema/mca_rules_INDAS.json  MCA's official Ind AS business rules (V1.2)
   validator.py            MCA business rules, types, totals
+  mca_rules.py            checks for MCA's official business rules workbook
   calc.py                 total computation and checks
   periods.py              instant / duration resolution
   taxonomy.py             MCA taxonomy download and cache
@@ -123,6 +153,7 @@ tools/
   extract_template.py     rebuild schema/*.json from a new InstantXBRL template
   learn_periods.py        learn period types from more instance documents
   compare_instances.py    fact-by-fact comparison of two instances
+  import_business_rules.py  MCA business rules workbook -> schema/mca_rules_<KEY>.json
 tests/
 ```
 

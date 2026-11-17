@@ -672,13 +672,19 @@ class Validator:
                            eid, self.section_of(eid), "PY")
 
     def run(self) -> Result:
+        from .mca_rules import McaRules, has_rules
         self.check_filing()
         self.check_types()
-        self.check_rules()
+        official = has_rules(self.f.taxonomy)
+        if not official:
+            # MCA's own business rules workbook, when imported, replaces the template's older copy
+            self.check_rules()
         self.check_totals()
         self.check_tables()
         self.check_mca()
         self.check_mca_rows()
+        if official:
+            McaRules(self).run()
         # de-duplicate
         seen, out = set(), []
         for i in self.r.items:
