@@ -65,6 +65,8 @@ def test_sample_roundtrip():
             t.write(xml)
         assert compare(fp, t.name), f"regenerated instance differs from {fp}"
         res = validate(f)
+        # facts the TaxPrint sample itself leaves out although MCA's business rules (C&I V1.3) require them
+        # MCA's validation tool accepted this file, so no check may call it an error
         assert not res.errors, res.errors[:5]
 
 

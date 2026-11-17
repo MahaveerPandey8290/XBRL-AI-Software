@@ -11,6 +11,9 @@ Checks performed:
   standalone/consolidated-only, non-negative, percentage, dependency,
   yes/no-triggered fields, dates not in the future, less-than-element,
   different-from-element, table-mandatory elements, etc.;
+* MCA's official business rules workbook for the taxonomy (business_rules.py):
+  element rules, mandatory line items, parent/child members and the generic
+  rules;
 * accounting checks: totals equal the sum of their components (template
   formulas / taxonomy calculation linkbase) and balance sheet balances.
 
@@ -23,6 +26,7 @@ import re
 from datetime import date
 from decimal import Decimal
 
+from .business_rules import BusinessRules
 from .calc import check_totals, fill_totals
 from .generator import is_numeric, to_number
 from .model import Filing, parse_date
@@ -686,10 +690,14 @@ class Validator:
         self.check_tables()
         self.check_mca()
         self.check_mca_rows()
-        # de-duplicate
+        BusinessRules(self).run()
+        # de-duplicate; an official-rule finding is dropped when another check already reported the same thing
         seen, out = set(), []
+        reported = {(i["code"], i["element"], i["period"], i["table"]) for i in self.r.items if i.get("source") != "MCA_BR"}
         for i in self.r.items:
             k = (i["level"], i["code"], i["element"], i["period"], i["message"])
+            if i.get("source") == "MCA_BR" and (i["code"], i["element"], i["period"], i["table"]) in reported:
+                continue
             if k not in seen:
                 seen.add(k)
                 out.append(i)
