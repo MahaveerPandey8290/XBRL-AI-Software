@@ -344,3 +344,86 @@ def fill_both_years(f: Filing, schema) -> list[str]:
     if zeroed:
         notes.append("Previous-year amounts MCA needs but the documents don't give were set to 0: " + ", ".join(zeroed[:20]))
     return notes
+
+
+# ---------------------------------------------------------------- TaxPrint-style zeros
+CLASS_AXES = ("ClassesOfTangibleAssetsAxis", "ClassesOfIntangibleAssetsAxis")
+NEVER_ZERO = ("NumberOfEmployees",)
+NO_PY_ZERO = ("ChangesInTangibleAssets", "ChangesInIntangibleAssets")  # last year's movement comes from last year's XML
+# last year's figures for these tables come from last year's XML; a 0 would hide that they are missing
+NO_PY_ZERO_TABLES = ("DisclosureOfRelationshipAndTransactionsBetweenRelatedPartiesTable",)
+
+
+def row_signature(schema, tid: str, dims: dict, wildcard_classes: bool = False) -> str:
+    """A table row's members, with typed values (Column 1 ...) shown as '*'."""
+    t = schema.tables.get(tid) or {}
+    typed = {a["id"] for a in t.get("axes", []) if a.get("typedDomain")}
+    parts = []
+    for ax in sorted(dims):
+        m = dims[ax]
+        if ax in typed or (wildcard_classes and ax.endswith(CLASS_AXES)):
+            m = "*"
+        parts.append(f"{ax}={m}")
+    return "|".join(parts)
+
+
+def _zero_map(key: str) -> dict:
+    import json
+    from pathlib import Path
+    p = Path(__file__).resolve().parent / "schema" / f"zerofill_{key}.json"
+    if not p.exists():
+        return {"values": {}, "tables": {}}
+    return json.loads(p.read_text(encoding="utf-8"))
+
+
+def zero_fill_like_taxprint(f: Filing, schema) -> list[str]:
+    """Write 0 for the blank amounts TaxPrint writes as 0 (learned from its output by
+    tools/learn_zero_fill.py): in both years, and in every table row the filing has.
+    A blank total that its lines add up to something other than 0 is left to be worked out."""
+    from .calc import fill_totals, _num
+    zmap = _zero_map(f.taxonomy)
+    computed = fill_totals(f, schema)
+    n = 0
+
+    def ok(eid, pk):
+        el = schema.element(eid)
+        if not el or el.get("type") not in NUMERIC or el.get("abstract"):
+            return False
+        local = eid.split("_", 1)[-1]
+        if any(w in local for w in NEVER_ZERO):
+            return False
+        return not (pk == "PY" and local in NO_PY_ZERO)
+
+    has_py = bool(f.py_end)
+    items = {it["id"]: it for sec in schema.sections for it in sec["items"]}
+    for eid, pks in zmap.get("values", {}).items():
+        if "CY" in pks and "PY" not in pks and not items.get(eid, {}).get("noPY"):
+            pks = pks + ["PY"]  # MCA wants both years once one is given
+        for pk in pks:
+            if pk == "PY" and not has_py or not ok(eid, pk):
+                continue
+            if f.get_value(eid, pk) not in (None, ""):
+                continue
+            c = _num(computed.get(eid, {}).get(pk))
+            if c is not None and c != 0:
+                continue  # a total its lines give a value to
+            f.set_value(eid, pk, "0")
+            n += 1
+    for tid, rows in f.tables.items():
+        sigs = zmap.get("tables", {}).get(tid)
+        if not sigs:
+            continue
+        for row in rows:
+            spec = sigs.get(row_signature(schema, tid, row["dims"])) or sigs.get(
+                row_signature(schema, tid, row["dims"], wildcard_classes=True))
+            if not spec:
+                continue
+            for eid, pks in spec.items():
+                for pk in pks:
+                    if not ok(eid, pk) or (pk == "PY" and (not has_py or tid.endswith(NO_PY_ZERO_TABLES))):
+                        continue
+                    if (row["values"].get(eid) or {}).get(pk) not in (None, ""):
+                        continue
+                    row["values"].setdefault(eid, {})[pk] = "0"
+                    n += 1
+    return [f"{n} blank amounts written as 0 for both years and every table row, as TaxPrint does."] if n else []
