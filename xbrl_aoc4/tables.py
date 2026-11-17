@@ -1675,6 +1675,7 @@ class Tables:
                 hit = (c4, cat, c8, mm.group(0))
                 break
         dims = {"TypesOfPrincipalProductOrServicesAxis": "Column 1"}
+        self.principal_activity(hit, desc_src if m else "")
         if not hit:
             self.ask("DisclosureOfPrincipalProductOrServicesTable", dims, "ProductOrServiceCategoryITC4DigitCode",
                      "ITC / NPCS 4-digit code of the main product or service")
@@ -1692,6 +1693,26 @@ class Tables:
         self.put_row("DisclosureOfPrincipalProductOrServicesTable", dims, vals,
                      f"directors' report: business of {word} (service code {c4} / {c8})")
         self.notes.append(f"Principal service: {name}, code {c4} ({cat}) / {c8}, turnover = revenue from operations.")
+
+    def principal_activity(self, hit, business: str):
+        """MCA rule (C&I BR, 400400): name, description and NIC code of the main business are mandatory for years
+        starting after 01-04-2018. The NIC code is the industry code inside the CIN (characters 2 to 6)."""
+        T = "DetailsOfPrincipalBusinessActivitiesContributing10PercentOrMoreOfTotalTurnoverOfCompanyTable"
+        dims = {"PrincipalBusinessActivitiesOfCompanyAxis": "ProductOrService1Member"}
+        cin = (self.f.cin or "").strip().upper()
+        vals = {"PercentageToTotalTurnoverOfCompany": {"CY": "1"}}  # MCA percentages are fractions (1 = 100%)
+        if re.match(r"^[LU]\d{5}[A-Z]{2}\d{4}[A-Z]{3}\d{6}$", cin):
+            vals["NICCodeOfProductOrService"] = {"CY": cin[1:6]}
+        if hit:
+            c4, cat, c8, word = hit
+            vals["NameOfMainProductOrService"] = {"CY": word.title() if len(word) > 3 else cat.title()}
+            vals["DescriptionOfMainProductOrService"] = {"CY": (business.strip() or cat)[:200]}
+        self.put_row(T, dims, vals, "main business from the directors' report; NIC code from the CIN")
+        if not hit:
+            self.ask(T, dims, "NameOfMainProductOrService", "Name of the main product or service")
+            self.ask(T, dims, "DescriptionOfMainProductOrService", "Description of the main product or service")
+        if "NICCodeOfProductOrService" not in vals:
+            self.ask(T, dims, "NICCodeOfProductOrService", "NIC code of the main product or service")
 
     # ------------------------------------------------------------ CARO remarks
     CARO_MAP = {

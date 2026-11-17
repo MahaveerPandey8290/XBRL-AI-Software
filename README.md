@@ -62,6 +62,12 @@ On other systems: `pip install -r requirements.txt` then `python run.py`.
   dependencies, fields required when a Yes/No answer is Yes, dates not in the
   future, value not more than another element, table-mandatory elements,
   unique PANs, CIN different from the company's own, and more.
+- MCA's official business rules for the C&I taxonomy (Non-Ind AS), from
+  MCA's own workbook (`reference/mca/`, V1.3): element rules, mandatory line
+  items per table, parent/child members and the generic rules (previous year
+  figures, 2 decimals, sections that don't apply to the previous year or to
+  consolidated documents, and more). Each finding names its rule, e.g.
+  "MCA BR 200100". See `reference/mca/README.md` for what is and isn't checked.
 - Totals: every total in the template (205 formulas non-Ind AS, 261 Ind AS)
   must equal the sum of its components, and the balance sheet must balance.
 
