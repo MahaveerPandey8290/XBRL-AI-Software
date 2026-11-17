@@ -132,6 +132,8 @@ class Validator:
                 self.r.add("error", "PERIOD", "Reporting period cannot exceed 18 months (Section 2(41)).")
             if fe > date.today():
                 self.r.add("warning", "PERIOD", "Financial year end date is in the future.")
+        if f.taxonomy == "COST":
+            return  # CRA-4 has no standalone/consolidated choice; its own checks are in cost.py
         if f.nature not in ("Standalone", "Consolidated"):
             self.r.add("error", "NATURE", "Nature of report must be Standalone or Consolidated.")
         cin_fact = self.v(self._id("in-ca", "CorporateIdentityNumber"))
@@ -697,6 +699,9 @@ class Validator:
         if official:
             McaRules(self).run()
         BusinessRules(self).run()
+        if self.f.taxonomy == "COST":
+            from .cost import check_cost
+            check_cost(self)
         # de-duplicate; an official-rule finding is dropped when another check already reported the same thing
         seen, out = set(), []
         reported = {(i["code"], i["element"], i["period"], i["table"]) for i in self.r.items if i.get("source") != "MCA_BR"}

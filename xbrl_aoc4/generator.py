@@ -272,7 +272,10 @@ class Generator:
         from .mca_rules import output_filter
         drop = output_filter(f, self.schema) or (lambda eid, pk, tid="": False)
         dropped = 0
-        self.base_contexts()
+        if f.taxonomy != "COST":
+            # TaxPrint always writes the five plain contexts; for CRA-4 every context
+            # must be used by a fact, so they are made only as facts need them
+            self.base_contexts()
         for eid in self.ordered_value_ids(values):
             for pk in ("CY", "PY", "OPEN"):
                 v = values.get(eid, {}).get(pk)
@@ -381,7 +384,7 @@ class Generator:
         units = [UNIT_XML[u] for u in ("INR", "INRPerShare", "Pure", "Shares") if u in self.units]
         parts = [
             '<?xml version="1.0" encoding="UTF-8"?>',
-            "<!--Created by XBRL AOC-4 Generator (Python) -->",
+            "<!--Created by XBRL %s Generator (Python) -->" % ("CRA-4" if self.f.taxonomy == "COST" else "AOC-4"),
             f"<!--Document Date : {now.strftime('%d %b %Y %H:%M:%S')} -->",
             "\n".join(ns_lines) + "\n >",
             f'<link:schemaRef xlink:type="simple" xlink:href="{schema_ref}" /> ',
@@ -419,5 +422,7 @@ def generate(filing: Filing) -> tuple[str, list[str]]:
 def output_filename(filing: Filing) -> str:
     fs, fe = parse_date(filing.fy_start), parse_date(filing.fy_end)
     fy = f"FY[{fs.year if fs else ''}-{fe.year if fe else ''}]"
+    if filing.taxonomy == "COST":
+        return f"{fy} {filing.cin} CRA-4 Cost Audit Report {datetime.now().strftime('%d-%m-%Y')}.xml"
     nat = filing.nature or "Standalone"
     return f"{fy} {filing.cin} {nat}_BalanceSheet {datetime.now().strftime('%d-%m-%Y')}.xml"

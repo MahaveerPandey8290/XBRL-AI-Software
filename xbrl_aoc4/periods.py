@@ -38,8 +38,8 @@ def heuristic(key: str, el: dict, table: dict | None = None) -> str:
         return "instant"
     if t not in NUMERIC_TYPES:
         return "duration"
-    if t == "perShareItemType":
-        return "duration"
+    if t == "perShareItemType" or key == "COST":
+        return "duration"  # cost statements are for the year; the few balances come from periods_COST.json
     name = el.get("name", "")
     inst_secs = INSTANT_SECTIONS_AS if key == "AS" else INSTANT_SECTIONS_INDAS
     if el.get("section") in inst_secs:

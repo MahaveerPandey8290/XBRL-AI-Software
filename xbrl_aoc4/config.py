@@ -41,6 +41,19 @@ TAXONOMIES = {
         # Not yet checked against a real Ind AS instance from the MCA portal.
         "verified": False,
     },
+    "COST": {
+        "title": "Costing Taxonomy 2019 - Cost Audit Report (Form CRA-4)",
+        "form": "CRA-4",
+        # Entry point and namespace of the Costing Taxonomy 2019 are taken from the
+        # official taxonomy package when it is loaded (python -m xbrl_aoc4.taxonomy COST
+        # <package.zip>), or from settings.json. Until then these follow MCA's naming of
+        # its other taxonomies and must be checked before filing.
+        "schemaRef": "https://www.mca.gov.in/XBRL/2019/Taxonomy/Costing/in-cost-car-2019-03-31.xsd",
+        "namespaces": {
+            "in-cost": "http://www.icmai.in/xbrl/taxonomy/2019-03-31/in-cost",
+        },
+        "verified": False,
+    },
 }
 
 STANDARD_NS = {
@@ -77,4 +90,24 @@ def load_settings() -> dict:
     return {}
 
 
+def load_packages():
+    """Apply what was read from an official taxonomy package (schema/package_<KEY>.json,
+    written by ``python -m xbrl_aoc4.taxonomy KEY <package.zip>``): the real entry point
+    and namespaces."""
+    for key in TAXONOMIES:
+        p = APP_DIR / "schema" / f"package_{key}.json"
+        if not p.exists():
+            continue
+        try:
+            pkg = json.loads(p.read_text(encoding="utf-8"))
+        except Exception:  # noqa: BLE001
+            continue
+        if pkg.get("schemaRef"):
+            TAXONOMIES[key]["schemaRef"] = pkg["schemaRef"]
+        if pkg.get("namespaces"):
+            TAXONOMIES[key]["namespaces"] = dict(pkg["namespaces"])
+        TAXONOMIES[key]["verified"] = True
+
+
+load_packages()
 SETTINGS = load_settings()

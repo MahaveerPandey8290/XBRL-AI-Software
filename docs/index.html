@@ -65,20 +65,20 @@ textarea { width:100%; min-height:70px; padding:8px 9px; border:1px solid var(--
 </head>
 <body>
 <header><div class="wrap">
-  <h1>AOC-4 XBRL Generator</h1>
-  <p>Create the MCA AOC-4 XBRL instance document (XML) for Non-Ind AS (C&amp;I taxonomy) and Ind AS companies, check it against the MCA business rules, and download it. Your files are processed inside your browser and never uploaded.</p>
+  <h1>AOC-4 and CRA-4 XBRL Generator</h1>
+  <p>Create the MCA AOC-4 XBRL instance document (XML) for Non-Ind AS (C&amp;I taxonomy) and Ind AS companies, and the CRA-4 cost audit report (Costing taxonomy 2019), check it against the MCA business rules, and download it. Your files are processed inside your browser and never uploaded.</p>
 </div></header>
 <main>
   <section class="panel">
     <h2>1. Filing details</h2>
     <div class="grid">
       <div><label for="taxonomy">Taxonomy</label>
-        <select id="taxonomy"><option value="AS">Non-Ind AS (Companies AS) - C&amp;I 2016</option><option value="INDAS">Ind AS - 2017</option></select></div>
+        <select id="taxonomy"><option value="AS">Non-Ind AS (Companies AS) - C&amp;I 2016</option><option value="INDAS">Ind AS - 2017</option><option value="COST">Costing 2019 - Cost audit report (CRA-4)</option></select></div>
       <div><label for="company">Company name</label><input id="company" placeholder="As in MCA records"></div>
       <div><label for="cin">CIN</label><input id="cin" maxlength="21" placeholder="U74899DL1993PTC051877"></div>
       <div><label for="fy_start">Financial year start</label><input id="fy_start" type="date" value="2025-04-01"></div>
       <div><label for="fy_end">Financial year end</label><input id="fy_end" type="date" value="2026-03-31"></div>
-      <div><label for="nature">Nature of report</label><select id="nature"><option>Standalone</option><option>Consolidated</option></select></div>
+      <div id="nature-box"><label for="nature">Nature of report</label><select id="nature"><option>Standalone</option><option>Consolidated</option></select></div>
     </div>
     <p class="hint">When you upload a filled template or an existing XML, its own company details are used for anything you leave blank here.</p>
   </section>
@@ -86,7 +86,15 @@ textarea { width:100%; min-height:70px; padding:8px 9px; border:1px solid var(--
   <section class="panel">
     <h2>2. Upload your data</h2>
     <input id="files" type="file" multiple accept=".xls,.xlsx,.xml,.docx,.doc,.pdf,.txt">
+    <div id="cost-help" class="hidden">
     <ul class="hint">
+      <li><b>CRA-4 input workbook</b> (.xlsx): one sheet for each part of the annexure to the cost audit report (general information, cost auditors, products and services, quantitative information, abridged cost statements with materials and utilities, profitability, profit reconciliation, value addition, financial position, related parties, indirect taxes). <a href="#" id="cost-wb">Download the empty workbook</a>, fill it and upload it here.</li>
+      <li><b>Cost audit report</b> (.docx / .pdf): its paragraphs go into the cost auditor's report text blocks; the membership number, firm registration number, place and date of signing are picked up. A file named "Cost accounting policy" goes into the cost accounting policy.</li>
+      <li><b>Existing CRA-4 XBRL</b> (.xml): to check or regenerate it. <b>Last year's CRA-4</b> (.xml), uploaded with this year's files, fills the previous year figures.</li>
+    </ul>
+    <p class="hint">Checked against MCA's Business Rules for the Costing Taxonomy 2019 (V1.1).</p>
+    </div>
+    <ul class="hint" id="aoc-help">
       <li><b>Filled InstantXBRL / TaxPrint template</b> (.xls / .xlsx): every section and table is read.</li>
       <li><b>Existing XBRL instance</b> (.xml): to check or regenerate it.</li>
       <li><b>Last year's AOC-4 XBRL</b> (.xml, filed for the previous year), uploaded with this year's documents: MCA needs last year's movement in fixed assets and last year's related party transactions, which this year's documents don't give. They are taken from it, with the directors' DIN, PAN and date of birth and the auditor's PAN, SRN and address.</li>
@@ -100,6 +108,7 @@ textarea { width:100%; min-height:70px; padding:8px 9px; border:1px solid var(--
   <section id="results" class="panel hidden">
     <h2>3. Check the result</h2>
     <div id="summary"></div>
+    <p id="wb-bar" class="hidden"><button id="wb-dl" class="btn">Download the CRA-4 workbook with these values</button> <span class="hint">Complete the missing parts in Excel and upload it again.</span></p>
     <div id="questions"></div>
     <h2 style="margin-top:18px">4. Review every value before the XML is made</h2>
     <p class="hint">Everything below was read or worked out from your documents. The last column says where each value came from. Click a value to correct it.</p>
@@ -157,8 +166,8 @@ async function boot() {
     const buf = await resp.arrayBuffer();
     py.unpackArchive(buf, 'zip', {extractDir: '/app'});
     await py.runPythonAsync("import sys; sys.path.insert(0, '/app'); import xbrl_aoc4.browser");
-    $('run').disabled = false; $('run').textContent = 'Read documents and fill AOC-4';
-    setStatus('Ready. Choose your files and click "Read documents and fill AOC-4".', 'ok');
+    $('run').disabled = false; syncTaxonomy();
+    setStatus('Ready. Choose your files and click the button below them.', 'ok');
   } catch (e) {
     setStatus('Could not start the engine: ' + e.message + '. Use the desktop app instead.', 'err');
   }
@@ -198,7 +207,7 @@ function show(r) {
   lastXml = r.xml; lastName = r.filename;
   $('results').classList.remove('hidden');
   const ok = r.errors.length === 0;
-  $('summary').innerHTML = `<div class="status ${ok ? 'ok' : 'err'}">${esc(r.company || 'Company')} &middot; ${esc(r.cin)} &middot; ${r.taxonomy === 'INDAS' ? 'Ind AS' : 'Non-Ind AS'} &middot; ${esc(r.nature)} &middot; FY ${esc(r.fy_start)} to ${esc(r.fy_end)}<br>
+  $('summary').innerHTML = `<div class="status ${ok ? 'ok' : 'err'}">${esc(r.company || 'Company')} &middot; ${esc(r.cin)} &middot; ${r.taxonomy === 'COST' ? 'Costing (CRA-4)' : r.taxonomy === 'INDAS' ? 'Ind AS' : 'Non-Ind AS'} &middot; ${esc(r.nature)} &middot; FY ${esc(r.fy_start)} to ${esc(r.fy_end)}<br>
     ${r.facts} facts generated. ${r.errors.length} error(s), ${r.warnings.length} warning(s)${ok ? ': passes all checks.' : '.'}</div>`;
   const names = {CY: 'Current year', PY: 'Previous year', OPEN: 'Opening'};
   renderQuestions(r.inputs || [], names);
@@ -212,6 +221,8 @@ function show(r) {
       r.mapped.map(m => `<tr><td>${esc(m.caption)}</td><td class="n">${m.cy == null ? '' : Number(m.cy).toFixed(2)}</td><td class="n">${m.py == null ? '' : Number(m.py).toFixed(2)}</td><td>${m.element ? esc(m.label) : '<span class="hint">not mapped (use the desktop app to map it)</span>'}</td></tr>`).join('') + '</table></div>';
   } else { $('mapping').innerHTML = ''; }
   $('log').innerHTML = r.log.map(l => `<li>${esc(l)}</li>`).join('');
+  lastWorkbook = r.workbook || null;
+  $('wb-bar').classList.toggle('hidden', !lastWorkbook);
   lastReview = r.review || []; edits = {};
   renderReview();
   $('confirm-box').checked = false; $('confirm').disabled = true;
@@ -344,13 +355,40 @@ function renderQuestions(inputs, names) {
   });
 }
 
+let lastWorkbook = null;
+function saveB64(b64, name, type) {
+  const bin = atob(b64), arr = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([arr], {type}));
+  a.download = name; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+const XLSX = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+$('wb-dl').addEventListener('click', () => { if (lastWorkbook) saveB64(lastWorkbook, `CRA-4 input ${($('cin').value || '').trim()}.xlsx`, XLSX); });
+$('cost-wb').addEventListener('click', async e => {
+  e.preventDefault();
+  if (!py) { setStatus('The engine is still loading; try again in a moment.'); return; }
+  const b64 = await py.runPythonAsync("import xbrl_aoc4.browser as b\nb.cost_workbook()");
+  saveB64(b64, 'CRA-4 input workbook.xlsx', XLSX);
+});
+function syncTaxonomy() {
+  const cost = $('taxonomy').value === 'COST';
+  $('cost-help').classList.toggle('hidden', !cost);
+  $('aoc-help').classList.toggle('hidden', cost);
+  $('nature-box').classList.toggle('hidden', cost);
+  if (py) $('run').textContent = cost ? 'Read files and fill CRA-4' : 'Read documents and fill AOC-4';
+}
+$('taxonomy').addEventListener('change', syncTaxonomy);
+syncTaxonomy();
+
 function downloadXml() {
   if (!lastXml) return;
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([lastXml], {type: 'application/xml'}));
   a.download = lastName; a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 2000);
-  $('confirm-hint').textContent = `Saved ${lastName}. Upload it in the AOC-4 XBRL form on the MCA portal.`;
+  $('confirm-hint').textContent = `Saved ${lastName}. Upload it in the ${$('taxonomy').value === 'COST' ? 'CRA-4' : 'AOC-4'} XBRL form on the MCA portal.`;
 }
 boot();
 </script>

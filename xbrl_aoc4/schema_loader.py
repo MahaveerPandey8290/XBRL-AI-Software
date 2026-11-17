@@ -38,7 +38,31 @@ class Schema:
                     self.member_label.setdefault(m["id"], m["label"])
         ptf = SCHEMA_DIR / f"periods_{key}.json"
         self.learned_periods = json.loads(ptf.read_text(encoding="utf-8")) if ptf.exists() else {}
+        self.exempt_parents = set(data.get("exempt_parents", []))
+        self._apply_package(key)
         self.section_by_code = {s["code"]: s for s in self.sections}
+
+    def _apply_package(self, key: str):
+        """Data types, period types and typed domains from the official taxonomy package,
+        when it has been loaded (they replace the ones worked out from the rules workbook)."""
+        from .taxonomy import package
+        pkg = package(key)
+        if not pkg:
+            return
+        types, periods, typed = pkg.get("types", {}), pkg.get("periods", {}), pkg.get("typedDomains", {})
+        for eid, el in self.elements.items():
+            t = types.get(eid)
+            if t and not el.get("abstract") and (t.endswith("ItemType") or t in ("CINNumber", "PANNumber", "SRNNumber")):
+                el["type"] = t
+        for t in self.tables.values():
+            for it in t["items"]:
+                if types.get(it["id"], "").endswith("ItemType"):
+                    it["type"] = types[it["id"]]
+            for a in t["axes"]:
+                if a["id"] in typed:
+                    dom = typed[a["id"]]
+                    a["typedDomain"] = dom if "_" in dom else a["id"].split("_", 1)[0] + "_" + dom
+        self.learned_periods.update({k: v for k, v in periods.items() if k in self.elements})
 
     # ------------------------------------------------------------------
     def is_detail_column(self, tid: str, dims: dict) -> bool:
