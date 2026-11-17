@@ -18,6 +18,7 @@ main { padding:20px 16px 60px; }
 .panel { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:18px 20px; margin-bottom:18px; }
 h2 { font-size:18px; margin:0 0 12px; }
 .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px 16px; }
+.muted { color:var(--muted); font-size:12px; }
 label { display:block; font-size:13px; color:var(--muted); margin-bottom:4px; }
 input, select { width:100%; padding:8px 9px; border:1px solid var(--line); border-radius:6px; font:inherit; background:var(--panel); color:var(--ink); }
 .btn { display:inline-block; padding:9px 16px; border-radius:7px; border:1px solid var(--line); background:var(--panel); color:var(--ink); cursor:pointer; font:inherit; text-decoration:none; }
@@ -214,7 +215,7 @@ function show(r) {
   $('autofilled').classList.toggle('hidden', !filledNotes.length);
   $('notes').innerHTML = filledNotes.map(l => `<li>${esc(l)}</li>`).join('');
   $('findings').innerHTML = [...r.errors, ...r.warnings].slice(0, 400).map(i =>
-    `<div class="finding"><span class="lvl-${i.level}">${i.level.toUpperCase()}</span> ${i.period ? '[' + names[i.period] + '] ' : ''}${esc(i.message)}</div>`).join('');
+    `<div class="finding"><span class="lvl-${i.level}">${i.level.toUpperCase()}</span> ${i.period ? '[' + names[i.period] + '] ' : ''}${esc(i.message)}${i.ref ? ' <span class="muted">(' + esc(i.ref) + ')</span>' : ''}</div>`).join('');
   if (r.mapped && r.mapped.length) {
     $('mapping').innerHTML = '<h2 style="margin-top:16px">Financial statement mapping</h2><div class="scroll"><table><tr><th>Caption</th><th>Current year</th><th>Previous year</th><th>XBRL element</th></tr>' +
       r.mapped.map(m => `<tr><td>${esc(m.caption)}</td><td class="n">${m.cy == null ? '' : Number(m.cy).toFixed(2)}</td><td class="n">${m.py == null ? '' : Number(m.py).toFixed(2)}</td><td>${m.element ? esc(m.label) : '<span class="hint">not mapped (use the desktop app to map it)</span>'}</td></tr>`).join('') + '</table></div>';

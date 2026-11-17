@@ -269,6 +269,9 @@ class Generator:
     def build(self) -> str:
         f = self.f
         values = fill_totals(f, self.schema)
+        from .mca_rules import output_filter
+        drop = output_filter(f, self.schema) or (lambda eid, pk, tid="": False)
+        dropped = 0
         if f.taxonomy != "COST":
             # TaxPrint always writes the five plain contexts; for CRA-4 every context
             # must be used by a fact, so they are made only as facts need them
@@ -277,6 +280,9 @@ class Generator:
             for pk in ("CY", "PY", "OPEN"):
                 v = values.get(eid, {}).get(pk)
                 if v not in (None, ""):
+                    if drop(eid, pk):
+                        dropped += 1
+                        continue
                     self.fact(eid, pk, v)
         for tid, rows in f.tables.items():
             table = self.schema.tables.get(tid)
@@ -296,6 +302,9 @@ class Generator:
                     for pk in ("CY", "PY", "OPEN"):
                         v = vals.get(pk)
                         if v not in (None, ""):
+                            if drop(eid, pk, tid):
+                                dropped += 1
+                                continue
                             self.fact(eid, pk, v, dims or None, table, prefix="LI" if dims else "Elem")
                 for eid, per in (row.get("footnotes") or {}).items():
                     for pk, text in per.items():
@@ -303,6 +312,10 @@ class Generator:
         for eid, per in (getattr(f, "footnotes", {}) or {}).items():
             for pk, text in per.items():
                 self.footnote(eid, pk, text, None)
+        if dropped:
+            self.warnings.append(f"{dropped} value(s) left out of the XML because MCA's business rules have no place for them "
+                                 "(previous-year figures in report sections that have none, or sections that don't apply to "
+                                 f"a {'standalone' if (f.nature or 'Standalone') == 'Standalone' else 'consolidated'} report).")
         return self.render()
 
     def base_contexts(self):

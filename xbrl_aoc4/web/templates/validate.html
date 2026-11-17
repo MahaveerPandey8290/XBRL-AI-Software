@@ -14,7 +14,7 @@
   <div class="finding {{ i.level }}">
     <span class="lvl">{{ i.level|upper }}</span>
     {% if i.period %}<span class="tag">{{ {'CY':'Current year','PY':'Previous year','OPEN':'Opening'}.get(i.period, i.period) }}</span>{% endif %}
-    {{ i.message }}
+    {{ i.message }}{% if i.ref %} <span class="muted">({{ i.ref }})</span>{% endif %}
     {% if i.table %}<a href="{{ url_for('table', fid=fid, tid=i.table) }}">open table</a>
     {% elif i.section and i.section.startswith('T:') %}<a href="{{ url_for('table', fid=fid, tid=i.section[2:]) }}">open table</a>
     {% elif i.section %}<a href="{{ url_for('section', fid=fid, code=i.section) }}">open section</a>
