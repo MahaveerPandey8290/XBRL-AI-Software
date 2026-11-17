@@ -13,6 +13,36 @@ Both MCA taxonomies are supported:
 | **Non-Ind AS** (C&I Taxonomy 2016, `in-gaap` / `in-ca`) | Companies following the Companies (Accounting Standards) Rules | `InstantXBRL_Template_2026.xls` |
 | **Ind AS** (Ind AS Taxonomy 2017, `ind-as` / `in-ca`) | Companies following Indian Accounting Standards | `InstantXBRL_INDAS_Template_2026.xls` |
 
+### Cost audit report (Form CRA-4, Costing Taxonomy 2019)
+
+Choose **Costing 2019 - Cost audit report (CRA-4)** on the web page. The 23 parts
+of the CRA-4 annexure (`[100100]` to `[100420]`) and MCA's *Business Rules based on
+Costing Taxonomy 2019 (V1.1)* are in `xbrl_aoc4/schema/COST.json`, built by
+`python -m tools.build_cost_schema <rules.xlsx>`. Upload any of:
+
+- the **CRA-4 input workbook** (download it from the page, empty or filled with
+  what was already read): one sheet per part, products and cost auditors
+  numbered 1, 2, 3 ...;
+- the **cost audit report** (.docx / .pdf): paragraphs go into the cost
+  auditor's report text blocks; membership number, FRN, place and date are read;
+- an existing CRA-4 XML, and last year's CRA-4 XML for the previous year figures.
+
+Checks in `xbrl_aoc4/cost.py`: product/service sector, at least one product
+covered under cost audit, materials/utilities/industry expenses adding up to the
+cost statement, quantities sold equal to quantities available, margin totals
+equal to profit for audited products, profit before tax equal to profit as per
+financial accounts, cost auditors and CRA-2 SRNs, related parties, indirect taxes,
+previous year figures, and names consistent across parts.
+
+**Before filing:** the business rules workbook does not contain the taxonomy's
+entry point, namespace or data types. Load the official Costing Taxonomy 2019
+package once (offline):
+
+    python -m xbrl_aoc4.taxonomy COST "path/to/costing taxonomy.zip"
+
+This writes `xbrl_aoc4/schema/package_COST.json`, which then supplies the real
+schemaRef, namespace, data types and period types.
+
 ## Quick start (Windows)
 
 1. Install Python 3.10 or newer from python.org (tick "Add Python to PATH").

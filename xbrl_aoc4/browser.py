@@ -19,6 +19,13 @@ from .model import Filing
 from .validator import validate
 
 
+def cost_workbook() -> str:
+    """The empty CRA-4 input workbook (base64), for the page's download link."""
+    import base64
+    from .cost import make_workbook
+    return base64.b64encode(make_workbook()).decode()
+
+
 def _write(name: str, data: bytes) -> Path:
     p = Path(tempfile.mkdtemp()) / name
     p.write_bytes(bytes(data))
@@ -201,6 +208,9 @@ def process(files: list, header_json: str) -> str:
     from .schema_loader import load_schema
 
     h = json.loads(header_json or "{}")
+    if h.get("taxonomy") == "COST":
+        from .cost import process_cost
+        return process_cost(files, h)
     tax = h.get("taxonomy") or None
     f: Filing | None = None
     prior: Filing | None = None

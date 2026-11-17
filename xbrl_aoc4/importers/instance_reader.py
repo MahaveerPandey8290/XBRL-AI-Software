@@ -55,6 +55,8 @@ def read_contexts(root):
 
 
 def detect_taxonomy(root, prefixes: dict) -> str:
+    if any("cost" in p for p in prefixes.values()) or any("cost" in u.lower() for u in prefixes):
+        return "COST"
     for ref in root.iter(f"{{{LINK}}}schemaRef"):
         href = ref.get(f"{{{XLINK}}}href", "")
         if "2016" in href or "CnI" in href:
