@@ -571,7 +571,7 @@ class Validator:
         ("LoansAndAdvancesTable", ["LoansAndAdvancesDueByFirmsOrCompaniesInWhichAnyDirectorIsPartnerOrDirector"], ("CY", "PY"), None),
         ("SubclassificationOfTradeReceivablesTable", ["TradeReceivablesDueByFirmsOrCompaniesInWhichAnyDirectorIsPartnerOrDirector"], ("CY", "PY"), None),
         ("DisclosureOfRelationshipAndTransactionsBetweenRelatedPartiesTable",
-         ["AmountWrittenOffDuringPeriodInRespectOfDebtsDueFromRelatedParties", "AmountWrittenBackDuringPeriodInRespectOfDebtsDueToRelatedParties"], ("CY", "PY"), None),
+         ["AmountWrittenOffDuringPeriodInRespectOfDebtsDueFromRelatedParties", "AmountWrittenBackDuringPeriodInRespectOfDebtsDueToRelatedParties"], ("ANY",), None),
         ("DisclosureOfClassesOfShareCapitalTable", ["NumberOfSharesOutstanding", "IncreaseDecreaseInNumberOfSharesOutstanding",
                                                     "IncreaseDecreaseInShareCapital"], ("CY", "PY"), r"EquityShares|PreferenceShares"),
         ("DisclosureOfClassesOfShareCapitalTable", ["AmountPerShareCalledInCaseSharesNotFullyCalled"], ("CY", "PY"), r"(Equity|Preference)Shares\d+Member"),
@@ -598,6 +598,13 @@ class Validator:
             tid = self._lid(tname)
             for i, row in enumerate(self.f.tables.get(tid, []) if tid else []):
                 if member_rx and not any(re.search(member_rx, m) for m in short(row["dims"]).values()):
+                    continue
+                if pks == ("ANY",):
+                    # MCA accepted TaxPrint's file with these given for one year of the column only
+                    miss = [e for e in els if self._lid(e) and all(_empty(v) for v in row["values"].get(self._lid(e), {}).values())]
+                    if miss:
+                        self.r.add("error", "MCA_ROW", f"MCA needs {', '.join(self.label(self._lid(e)) for e in miss)} in column {i + 1} "
+                                   f"of '{self.schema.tables[tid]['title']}'.", self._lid(miss[0]), "T:" + tid, "CY", tid)
                     continue
                 for pk in pks:
                     # a row MCA sees for that year: it has some value for the year (or its closing date)

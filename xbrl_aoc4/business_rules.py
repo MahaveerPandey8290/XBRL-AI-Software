@@ -231,7 +231,13 @@ class BusinessRules:
     def k_mandatory_if_start_after(self, eid, c, ref):
         fs = parse_date(self.f.fy_start)
         if fs and fs.isoformat() > c["date"]:
+            n = len(self.r.items)
             self.k_mandatory(eid, {"cy_only": True}, ref)
+            if self.table_of(eid):
+                # MCA's tool accepted TaxPrint's file without the principal business activity table, so a missing
+                # table line item of this rule is a warning, not an error
+                for i in self.r.items[n:]:
+                    i["level"] = "warning"
 
     def _each(self, eid):
         for pk, v, tid, dims in self.values(eid):
@@ -459,10 +465,12 @@ class BusinessRules:
             for i, row in enumerate(self.f.tables[tid]):
                 if not self.s.is_detail_column(tid, row["dims"]):
                     continue
-                for pk in ("CY",) + (("PY",) if self.needs_py(req[0]) else ()):
-                    if not self.row_has(row, pk):
+                # MCA's tool accepted TaxPrint's file with a line item given for one year of the column only,
+                # so an item counts as given when either year has it
+                for pk in ("CY",):
+                    if not self.row_has(row):
                         continue
-                    miss = [e for e in req if not self.present(e, pk, row) and not (pk == "PY" and not self.needs_py(e))]
+                    miss = [e for e in req if not self.present(e, None, row)]
                     if miss:
                         names = ", ".join(self.label(e) for e in miss[:6]) + (f" and {len(miss) - 6} more" if len(miss) > 6 else "")
                         self.add("MCA_ROW", f"MCA needs {names} in column {i + 1} of '{t['title']}' ({pk}).", miss[0], pk, tid, ref)

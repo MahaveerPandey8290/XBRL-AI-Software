@@ -66,10 +66,8 @@ def test_sample_roundtrip():
         assert compare(fp, t.name), f"regenerated instance differs from {fp}"
         res = validate(f)
         # facts the TaxPrint sample itself leaves out although MCA's business rules (C&I V1.3) require them
-        known = {"AmountWrittenOffDuringPeriodInRespectOfDebtsDueFromRelatedParties", "NameOfMainProductOrService",
-                 "DescriptionOfMainProductOrService", "NICCodeOfProductOrService"}
-        errs = [e for e in res.errors if e["element"].split("_", 1)[-1] not in known]
-        assert not errs, errs[:5]
+        # MCA's validation tool accepted this file, so no check may call it an error
+        assert not res.errors, res.errors[:5]
 
 
 def test_generate_as_with_totals():
